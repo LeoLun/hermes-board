@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>天气</title>
+<style>
+  .content { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
+  .actions { display: flex; gap: 6px; }
+  .place { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+  .place .hb-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .region { color: var(--hb-ink-muted); white-space: nowrap; }
+  .hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .now { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .temp { font-weight: 300; font-size: min(18vh, 64px); line-height: 1; letter-spacing: -1px; }
+  .cond { color: var(--hb-ink-2); }
+  .hilo { color: var(--hb-ink-muted); }
+  .icon { color: var(--hb-ink-2); flex: none; width: min(18vh, 64px); height: min(18vh, 64px); }
+  .icon svg, .day-icon svg { width: 100%; height: 100%; display: block; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .fact { display: flex; flex-direction: column; gap: 2px; }
+  .fact-label { color: var(--hb-ink-muted); }
+  .days { flex: 1; min-height: 0; }
+  .day { display: grid; grid-template-columns: 3.5em 22px 1fr auto; align-items: center; gap: 8px; }
+  .day-icon { width: 22px; height: 22px; color: var(--hb-ink-2); }
+  .day-text { color: var(--hb-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day-range { white-space: nowrap; }
+  .day-range .lo { color: var(--hb-ink-muted); }
+  .pop { color: var(--hb-accent); margin-left: 6px; }
+  .footer { display: flex; justify-content: space-between; align-items: center; }
+  .editor { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
+  .editor-row { display: flex; gap: 8px; }
+  .editor-msg { min-height: 16px; color: var(--hb-ink-muted); }
+  .editor-msg.is-error { color: var(--hb-critical); }
+
+  /* 8x4：左侧当前天气，右侧三天预报（竖排三列），隐藏指标块 */
+  html[data-size="8x4"] .content { flex-direction: row; align-items: stretch; gap: 16px; }
+  html[data-size="8x4"] .hero { flex-direction: column; align-items: flex-start; justify-content: center; flex: 1; gap: 4px; }
+  html[data-size="8x4"] .icon { display: none; }
+  html[data-size="8x4"] .facts, html[data-size="8x4"] .footer { display: none; }
+  html[data-size="8x4"] .days { flex: 1.3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  html[data-size="8x4"] .day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; border: 0; }
+  html[data-size="8x4"] .day-text, html[data-size="8x4"] .pop { display: none; }
+  html[data-size="8x4"] .day-icon { width: 28px; height: 28px; }
+
+  /* 4x4：只保留当前天气 */
+  html[data-size="4x4"] .region, html[data-size="4x4"] .facts, html[data-size="4x4"] .days,
+  html[data-size="4x4"] .footer, html[data-size="4x4"] #refresh { display: none; }
+  html[data-size="4x4"] .temp { font-size: min(24vh, 56px); }
+  html[data-size="4x4"] .icon { width: min(20vh, 44px); height: min(20vh, 44px); align-self: flex-start; }
+  html[data-size="4x4"] .hero { align-items: flex-start; }
+
+  /* 格子很小时（窄窗口）逐级精简 */
+  @media (max-height: 330px) { html[data-size="8x8"] .facts { display: none; } }
+  @media (max-height: 260px) { html[data-size="8x8"] .pop, html[data-size="8x8"] .footer { display: none; } }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <div class="place"><h2 class="hb-title" id="city">天气</h2><span class="hb-fine region" id="region"></span></div>
+    <div class="actions">
+      <button class="hb-btn hb-btn--utility" id="change" type="button">更换</button>
+      <button class="hb-btn hb-btn--utility" id="refresh" type="button" aria-label="刷新天气">刷新</button>
+    </div>
+  </header>
+
+  <section class="content" id="content" hidden>
+    <div class="hero">
+      <div class="now">
+        <div class="temp" id="temp">—</div>
+        <div class="hb-body cond" id="cond"></div>
+        <div class="hb-fine hilo" id="hilo"></div>
+      </div>
+      <div class="icon" id="icon" aria-hidden="true"></div>
+    </div>
+    <div class="hb-well facts">
+      <div class="fact"><span class="hb-fine fact-label">体感</span><span class="hb-metric-sm" id="feels">—</span></div>
+      <div class="fact"><span class="hb-fine fact-label">湿度</span><span class="hb-metric-sm" id="humidity">—</span></div>
+      <div class="fact"><span class="hb-fine fact-label">风速</span><span class="hb-metric-sm" id="wind">—</span></div>
+    </div>
+    <ul class="hb-list days" id="days"></ul>
+    <div class="footer"><span class="hb-updated" id="updated"></span></div>
+  </section>
+
+  <section class="editor" id="editor" hidden>
+    <label class="hb-fine hb-muted" for="cityInput">输入城市名（中文或拼音）</label>
+    <div class="editor-row">
+      <input class="hb-input" id="cityInput" maxlength="40" placeholder="例如 上海" autocomplete="off">
+    </div>
+    <div class="editor-row">
+      <button class="hb-btn" id="save" type="button">确定</button>
+      <button class="hb-btn hb-btn--secondary" id="cancel" type="button">取消</button>
+    </div>
+    <div class="hb-fine editor-msg" id="editorMsg"></div>
+  </section>
+
+  <div class="hb-state" id="state"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var C = HermesCard;
+  var stateEl = $('state');
+  var editing = false;
+  var busy = false;
+
+  var CLOUD = 'M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 9.1 4.5 4.5 0 0 0 7 18z';
+  var CLOUD_HIGH = 'M7 14h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 5.1 4.5 4.5 0 0 0 7 14z';
+  var ICONS = {
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+    moon: '<path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/>',
+    partly: '<circle cx="8.5" cy="8.5" r="3"/><path d="M8.5 2.5v1.3M2.5 8.5h1.3M4.3 4.3l.9.9M12.7 4.3l-.9.9"/><path d="M9.5 20h8a3.5 3.5 0 0 0 .5-6.96A5 5 0 0 0 8.9 12.2 3.9 3.9 0 0 0 9.5 20z"/>',
+    cloudy: '<path d="' + CLOUD + '"/>',
+    rain: '<path d="' + CLOUD_HIGH + '"/><path d="M8.5 17l-1 3M12.5 17l-1 3M16.5 17l-1 3"/>',
+    snow: '<path d="' + CLOUD_HIGH + '"/><path d="M8 18.5h.01M12 20.5h.01M16 18.5h.01M10 22h.01M14 22h.01"/>',
+    thunder: '<path d="' + CLOUD_HIGH + '"/><path d="M12.5 15l-2.5 4h3l-2 4"/>',
+    fog: '<path d="M4 9h16M3 13h18M5 17h14"/>'
+  };
+  function icon(kind, isDay) {
+    var key = kind === 'clear' ? (isDay === false ? 'moon' : 'sun') : (ICONS[kind] ? kind : 'cloudy');
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + ICONS[key] + '</svg>';
+  }
+  function deg(v) { return v === null || v === undefined ? '—' : Math.round(v) + '°'; }
+  function dayLabel(dateStr, index) {
+    if (index === 0) return '明天';
+    if (index === 1) return '后天';
+    var p = dateStr.split('-');
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return '周' + '日一二三四五六'.charAt(d.getDay());
+  }
+
+  function show(kind, text) {
+    $('content').hidden = kind !== 'ready';
+    C.ui.state(stateEl, kind, text);
+  }
+
+  function render(cur, days) {
+    var v = cur.value;
+    $('city').textContent = v.city || '天气';
+    $('region').textContent = v.region && v.region !== v.city ? v.region : '';
+    $('temp').textContent = deg(v.temp);
+    $('cond').textContent = v.text || '';
+    $('hilo').textContent = '最高 ' + deg(v.high) + '  最低 ' + deg(v.low);
+    $('icon').innerHTML = icon(v.kind, v.isDay);
+    $('feels').textContent = deg(v.feelsLike);
+    $('humidity').textContent = v.humidity === null || v.humidity === undefined ? '—' : v.humidity + '%';
+    $('wind').textContent = v.wind === null || v.wind === undefined ? '—' : Math.round(v.wind) + ' km/h';
+    var list = $('days');
+    list.textContent = '';
+    (days.value || []).forEach(function (d, i) {
+      var li = document.createElement('li');
+      li.className = 'hb-row day';
+      li.innerHTML =
+        '<span class="hb-body"></span><span class="day-icon" aria-hidden="true">' + icon(d.kind, true) + '</span>' +
+        '<span class="hb-fine day-text"></span><span class="hb-body day-range"><span class="lo"></span> / <span class="hi"></span></span>';
+      li.children[0].textContent = dayLabel(d.date, i);
+      li.children[2].textContent = d.text;
+      if (typeof d.pop === 'number' && d.pop >= 30) {
+        var pop = document.createElement('span');
+        pop.className = 'pop';
+        pop.textContent = d.pop + '%';
+        li.children[2].appendChild(pop);
+      }
+      li.querySelector('.lo').textContent = deg(d.min);
+      li.querySelector('.hi').textContent = deg(d.max);
+      list.appendChild(li);
+    });
+    C.ui.updated($('updated'), cur.updatedAt);
+  }
+
+  function load() {
+    if (editing) return Promise.resolve();
+    return Promise.all([C.data.get('current'), C.data.get('forecast'), C.state.get('city')]).then(function (res) {
+      if (!res[0].value) {
+        $('city').textContent = res[2] || '天气';
+        show(busy ? 'loading' : 'empty', busy ? '正在获取天气…' : '暂无天气数据，点击刷新');
+        return;
+      }
+      render(res[0], res[1]);
+      show('ready');
+    }).catch(function (err) {
+      show('error', err.message);
+    });
+  }
+
+  function refresh(args) {
+    if (busy) return Promise.resolve(null);
+    busy = true;
+    $('refresh').disabled = true;
+    return C.run('fetch', args || {}, { wait: true }).then(function (run) {
+      if (run.status !== 'succeeded') throw new Error(run.error || '刷新失败');
+      return run;
+    }).finally(function () {
+      busy = false;
+      $('refresh').disabled = false;
+    });
+  }
+
+  function openEditor() {
+    editing = true;
+    $('content').hidden = true;
+    C.ui.state(stateEl, 'ready');
+    $('editor').hidden = false;
+    $('editorMsg').textContent = '';
+    $('editorMsg').classList.remove('is-error');
+    $('cityInput').value = '';
+    $('cityInput').focus();
+  }
+  function closeEditor() {
+    editing = false;
+    $('editor').hidden = true;
+    return load();
+  }
+  function saveCity() {
+    var name = $('cityInput').value.trim();
+    if (!name) { $('cityInput').focus(); return; }
+    $('save').disabled = true;
+    $('editorMsg').classList.remove('is-error');
+    $('editorMsg').textContent = '正在查找“' + name + '”…';
+    refresh({ city: name }).then(function () {
+      $('save').disabled = false;
+      closeEditor();
+    }).catch(function (err) {
+      $('save').disabled = false;
+      $('editorMsg').classList.add('is-error');
+      $('editorMsg').textContent = err.message;
+    });
+  }
+
+  $('change').addEventListener('click', function () { editing ? closeEditor() : openEditor(); });
+  $('cancel').addEventListener('click', closeEditor);
+  $('save').addEventListener('click', saveCity);
+  $('cityInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') saveCity();
+    if (e.key === 'Escape') closeEditor();
+  });
+  $('refresh').addEventListener('click', function () {
+    refresh().then(load).catch(function (err) { C.ui.notify(err.message, 'error'); });
+  });
+
+  C.ready().then(function () {
+    show('loading', '正在加载天气…');
+    load();
+    C.subscribe(['data:current', 'data:forecast'], load);
+  });
+})();
+</script>
+</body>
+</html>

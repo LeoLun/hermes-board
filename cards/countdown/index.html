@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>倒数日</title>
+<style>
+  .view { display: flex; flex-direction: column; justify-content: center; gap: 4px; flex: 1; min-height: 0; }
+  .label { color: var(--hb-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .count { display: flex; align-items: baseline; gap: 4px; }
+  .days { font-weight: 300; font-size: min(36vh, 30vw); line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; color: var(--hb-ink); }
+  .unit { color: var(--hb-ink-muted); }
+  .when { color: var(--hb-ink-muted); }
+  .form { display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+  .form-row { display: flex; gap: 8px; }
+  .msg { color: var(--hb-critical); min-height: 16px; }
+  html[data-size="6x4"] .view { flex-direction: row; align-items: center; justify-content: space-between; }
+  html[data-size="6x4"] .text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  html[data-size="6x4"] .days { font-size: min(40vh, 20vw); }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <h2 class="hb-title">倒数日</h2>
+    <button class="hb-btn hb-btn--utility" id="edit" type="button">修改</button>
+  </header>
+  <section class="view" id="view" hidden>
+    <div class="text">
+      <div class="hb-body label" id="label"></div>
+      <div class="hb-fine when" id="when"></div>
+    </div>
+    <div class="count"><span class="days" id="days">—</span><span class="hb-body unit" id="unit">天</span></div>
+  </section>
+  <section class="form" id="form" hidden>
+    <input class="hb-input" id="name" maxlength="20" placeholder="名称，例如 生日" autocomplete="off">
+    <input class="hb-input" id="date" type="date" aria-label="日期">
+    <div class="form-row">
+      <button class="hb-btn" id="save" type="button">保存</button>
+      <button class="hb-btn hb-btn--secondary" id="cancel" type="button">取消</button>
+    </div>
+    <div class="hb-fine msg" id="msg"></div>
+  </section>
+  <div class="hb-state" id="state"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var C = HermesCard;
+  var WEEK = '日一二三四五六';
+  var target = { name: '元旦', date: '' };
+  var editing = false;
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parse(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  function resolveDate(t) {
+    var d = parse(t.date);
+    if (d) return d;
+    var now = new Date();
+    return new Date(now.getFullYear() + 1, 0, 1);
+  }
+  function dayDiff(a, b) {
+    return Math.round((Date.UTC(a.getFullYear(), a.getMonth(), a.getDate()) - Date.UTC(b.getFullYear(), b.getMonth(), b.getDate())) / 86400000);
+  }
+
+  function render() {
+    var date = resolveDate(target);
+    var diff = dayDiff(date, new Date());
+    var name = target.name || '目标日';
+    $('when').textContent = date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日 星期' + WEEK.charAt(date.getDay());
+    if (diff > 0) {
+      $('label').textContent = '距离' + name + '还有';
+      $('days').textContent = String(diff);
+      $('unit').textContent = '天';
+    } else if (diff === 0) {
+      $('label').textContent = name;
+      $('days').textContent = '今天';
+      $('unit').textContent = '';
+    } else {
+      $('label').textContent = name + '已经过去';
+      $('days').textContent = String(-diff);
+      $('unit').textContent = '天';
+    }
+    $('view').hidden = false;
+    C.ui.state($('state'), 'ready');
+  }
+
+  function setEditing(on) {
+    editing = on;
+    $('form').hidden = !on;
+    $('view').hidden = on;
+    $('edit').textContent = on ? '取消' : '修改';
+    $('msg').textContent = '';
+    if (on) {
+      $('name').value = target.name || '';
+      $('date').value = iso(resolveDate(target));
+      $('name').focus();
+    } else {
+      render();
+    }
+  }
+
+  function save() {
+    var name = $('name').value.trim();
+    var date = $('date').value;
+    if (!name) { $('msg').textContent = '请填写名称'; return; }
+    if (!parse(date)) { $('msg').textContent = '请选择日期'; return; }
+    var next = { name: name, date: date };
+    $('save').disabled = true;
+    C.state.set('target', next).then(function () {
+      target = next;
+      setEditing(false);
+    }).catch(function (err) {
+      $('msg').textContent = err.message;
+    }).finally(function () { $('save').disabled = false; });
+  }
+
+  function load() {
+    return C.state.get('target').then(function (value) {
+      if (value && typeof value === 'object') target = { name: String(value.name || ''), date: String(value.date || '') };
+      if (!editing) render();
+    }).catch(function (err) {
+      $('view').hidden = true;
+      C.ui.state($('state'), 'error', err.message);
+    });
+  }
+
+  $('edit').addEventListener('click', function () { setEditing(!editing); });
+  $('cancel').addEventListener('click', function () { setEditing(false); });
+  $('save').addEventListener('click', save);
+  $('form').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') save();
+    if (e.key === 'Escape') setEditing(false);
+  });
+
+  C.ready().then(function () {
+    C.ui.state($('state'), 'loading');
+    load();
+    C.subscribe(['state:target'], function () { if (!editing) load(); });
+    setInterval(function () { if (!editing) render(); }, 60000);
+  });
+})();
+</script>
+</body>
+</html>

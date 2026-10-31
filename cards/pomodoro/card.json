@@ -1,0 +1,16 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "pomodoro",
+  "title": "番茄钟",
+  "description": "25 分钟专注、5 分钟休息，到点系统通知提醒",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["4x4", "6x6", "8x8"],
+  "defaultSize": "8x8",
+  "state": {
+    "session": {
+      "description": "{phase: focus|break, running, endsAt, remainingMs, completed, day}",
+      "default": { "phase": "focus", "running": false, "endsAt": null, "remainingMs": 1500000, "completed": 0, "day": "" }
+    }
+  }
+}

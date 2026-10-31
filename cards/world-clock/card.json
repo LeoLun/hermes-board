@@ -1,0 +1,20 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "world-clock",
+  "title": "世界时钟",
+  "description": "几个城市的当地时间，默认纽约、伦敦、东京，可自选",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["4x4", "8x4"],
+  "defaultSize": "4x4",
+  "state": {
+    "cities": {
+      "description": "城市列表 [{name, tz}]，最多 4 个",
+      "default": [
+        { "name": "纽约", "tz": "America/New_York" },
+        { "name": "伦敦", "tz": "Europe/London" },
+        { "name": "东京", "tz": "Asia/Tokyo" }
+      ]
+    }
+  }
+}

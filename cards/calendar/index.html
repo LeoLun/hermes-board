@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>日历</title>
+<style>
+  .nav { display: flex; gap: 4px; }
+  .nav .hb-btn--utility { padding: 3px 8px; }
+  .month { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, 1fr); flex: 1; min-height: 0; row-gap: 2px; }
+  .wd { text-align: center; color: var(--hb-ink-muted); padding-bottom: 4px; }
+  .cell { display: flex; align-items: center; justify-content: center; min-height: 0; }
+  .num { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+         width: min(9.5vh, 11vw); height: min(9.5vh, 11vw); font-size: clamp(10px, 4.6vh, 17px);
+         font-variant-numeric: tabular-nums; color: var(--hb-ink); }
+  .weekend .num { color: var(--hb-ink-muted); }
+  .other .num { color: var(--hb-ink-muted); opacity: 0.45; }
+  .today .num { background: var(--hb-accent); color: var(--hb-on-accent); font-weight: 600; opacity: 1; }
+  .summary { color: var(--hb-ink-muted); text-align: center; }
+  html[data-size="4x4"] .summary, html[data-size="4x4"] #today { display: none; }
+  html[data-size="4x4"] .wd { padding-bottom: 0; font-size: 10px; }
+  html[data-size="4x4"] .month { row-gap: 0; }
+  html[data-size="6x6"] .summary { display: none; }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <h2 class="hb-title" id="title">日历</h2>
+    <div class="nav">
+      <button class="hb-btn hb-btn--utility" id="prev" type="button" aria-label="上个月">‹</button>
+      <button class="hb-btn hb-btn--utility" id="today" type="button">今天</button>
+      <button class="hb-btn hb-btn--utility" id="next" type="button" aria-label="下个月">›</button>
+    </div>
+  </header>
+  <div class="month" id="month" role="grid" aria-labelledby="title"></div>
+  <div class="hb-fine summary" id="summary"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var WEEK = '日一二三四五六';
+  var view = new Date();
+  view.setDate(1);
+
+  function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function weekOfYear(d) {
+    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    var day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);
+    return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7);
+  }
+  function dayOfYear(d) { return Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
+
+  function render() {
+    var today = new Date();
+    var grid = $('month');
+    grid.textContent = '';
+    $('title').textContent = view.getFullYear() + '年' + (view.getMonth() + 1) + '月';
+    '一二三四五六日'.split('').forEach(function (w) {
+      var el = document.createElement('div');
+      el.className = 'hb-micro wd';
+      el.setAttribute('role', 'columnheader');
+      el.textContent = w;
+      grid.appendChild(el);
+    });
+    var first = new Date(view.getFullYear(), view.getMonth(), 1);
+    var lead = (first.getDay() + 6) % 7;
+    var start = new Date(first.getFullYear(), first.getMonth(), 1 - lead);
+    for (var i = 0; i < 42; i++) {
+      var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      var cell = document.createElement('div');
+      var cls = ['cell'];
+      if (d.getMonth() !== view.getMonth()) cls.push('other');
+      if (d.getDay() === 0 || d.getDay() === 6) cls.push('weekend');
+      if (sameDay(d, today)) cls.push('today');
+      cell.className = cls.join(' ');
+      cell.setAttribute('role', 'gridcell');
+      cell.setAttribute('aria-label', (d.getMonth() + 1) + '月' + d.getDate() + '日 星期' + WEEK.charAt(d.getDay()));
+      if (sameDay(d, today)) cell.setAttribute('aria-current', 'date');
+      var num = document.createElement('span');
+      num.className = 'num';
+      num.textContent = String(d.getDate());
+      cell.appendChild(num);
+      grid.appendChild(cell);
+    }
+    $('summary').textContent = '今天 ' + (today.getMonth() + 1) + '月' + today.getDate() + '日 星期' + WEEK.charAt(today.getDay()) +
+      ' · 第 ' + weekOfYear(today) + ' 周 · 今年第 ' + dayOfYear(today) + ' 天';
+    $('today').disabled = view.getFullYear() === today.getFullYear() && view.getMonth() === today.getMonth();
+  }
+
+  function shift(months) { view = new Date(view.getFullYear(), view.getMonth() + months, 1); render(); }
+
+  $('prev').addEventListener('click', function () { shift(-1); });
+  $('next').addEventListener('click', function () { shift(1); });
+  $('today').addEventListener('click', function () { var t = new Date(); view = new Date(t.getFullYear(), t.getMonth(), 1); render(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') shift(-1);
+    if (e.key === 'ArrowRight') shift(1);
+  });
+
+  HermesCard.ready().then(function () {
+    render();
+    var lastDay = new Date().getDate();
+    setInterval(function () {
+      var d = new Date().getDate();
+      if (d !== lastDay) { lastDay = d; render(); }
+    }, 60000);
+  });
+})();
+</script>
+</body>
+</html>

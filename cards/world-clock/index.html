@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>世界时钟</title>
+<style>
+  .zones { flex: 1; min-height: 0; justify-content: space-around; }
+  .zone { min-width: 0; }
+  .zone-name { display: flex; flex-direction: column; min-width: 0; }
+  .zone-sub { color: var(--hb-ink-muted); white-space: nowrap; }
+  .zone-time { font-weight: 300; font-size: min(11vh, 26px); line-height: 1.1; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; }
+  .picker { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+  .picker-foot { display: flex; justify-content: space-between; align-items: center; }
+  .hint { color: var(--hb-ink-muted); }
+
+  html[data-size="8x4"] .zones { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 12px; align-items: center; }
+  html[data-size="8x4"] .zone { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; border: 0; padding: 0; }
+  html[data-size="8x4"] .zone-time { font-size: min(20vh, 34px); order: 2; }
+  html[data-size="8x4"] .zone-name { order: 1; }
+  html[data-size="4x4"] .zone { padding: 4px 0; }
+  html[data-size="4x4"] .chips { gap: 4px; }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <h2 class="hb-title">世界时钟</h2>
+    <button class="hb-btn hb-btn--utility" id="edit" type="button">编辑</button>
+  </header>
+  <ul class="hb-list zones" id="zones" hidden></ul>
+  <section class="picker" id="picker" hidden>
+    <div class="chips" id="chips" role="group" aria-label="选择城市"></div>
+    <div class="picker-foot"><span class="hb-fine hint" id="hint"></span><button class="hb-btn" id="done" type="button">完成</button></div>
+  </section>
+  <div class="hb-state" id="state"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var C = HermesCard;
+  var MAX = 4;
+  var PRESETS = [
+    ['北京', 'Asia/Shanghai'], ['香港', 'Asia/Hong_Kong'], ['东京', 'Asia/Tokyo'], ['首尔', 'Asia/Seoul'],
+    ['新加坡', 'Asia/Singapore'], ['迪拜', 'Asia/Dubai'], ['莫斯科', 'Europe/Moscow'], ['柏林', 'Europe/Berlin'],
+    ['巴黎', 'Europe/Paris'], ['伦敦', 'Europe/London'], ['纽约', 'America/New_York'], ['芝加哥', 'America/Chicago'],
+    ['洛杉矶', 'America/Los_Angeles'], ['温哥华', 'America/Vancouver'], ['悉尼', 'Australia/Sydney'], ['奥克兰', 'Pacific/Auckland']
+  ];
+  var cities = [];
+  var editing = false;
+  var timer = null;
+  var formatters = {};
+
+  function partsIn(tz, date) {
+    var f = formatters[tz] || (formatters[tz] = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+    }));
+    var out = {};
+    f.formatToParts(date).forEach(function (p) { out[p.type] = p.value; });
+    return { y: +out.year, m: +out.month, d: +out.day, h: +out.hour % 24, min: +out.minute };
+  }
+  function describe(tz, now) {
+    var p = partsIn(tz, now);
+    var asUtc = Date.UTC(p.y, p.m - 1, p.d, p.h, p.min);
+    var local = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+    var diffH = Math.round((asUtc - local) / 900000) / 4;
+    var dayDiff = Math.round((Date.UTC(p.y, p.m - 1, p.d) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+    var day = dayDiff === 0 ? '今天' : dayDiff > 0 ? '明天' : '昨天';
+    var off = diffH === 0 ? '与本地相同' : (diffH > 0 ? '+' : '−') + Math.abs(diffH) + ' 小时';
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    return { time: pad(p.h) + ':' + pad(p.min), sub: day + ' · ' + off };
+  }
+
+  function renderZones() {
+    var list = $('zones');
+    var now = new Date();
+    list.textContent = '';
+    if (!cities.length) {
+      list.hidden = true;
+      C.ui.state($('state'), 'empty', '还没有城市，点击“编辑”添加');
+      return;
+    }
+    C.ui.state($('state'), 'ready');
+    list.hidden = false;
+    cities.forEach(function (c) {
+      var info = describe(c.tz, now);
+      var li = document.createElement('li');
+      li.className = 'hb-row zone';
+      li.innerHTML = '<div class="zone-name"><span class="hb-body"></span><span class="hb-fine zone-sub"></span></div><span class="zone-time"></span>';
+      li.querySelector('.hb-body').textContent = c.name;
+      li.querySelector('.zone-sub').textContent = info.sub;
+      li.querySelector('.zone-time').textContent = info.time;
+      list.appendChild(li);
+    });
+  }
+
+  function renderPicker() {
+    var box = $('chips');
+    box.textContent = '';
+    PRESETS.forEach(function (p) {
+      var on = cities.some(function (c) { return c.tz === p[1]; });
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'hb-chip';
+      b.textContent = p[0];
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.disabled = !on && cities.length >= MAX;
+      b.addEventListener('click', function () { toggle(p); });
+      box.appendChild(b);
+    });
+    $('hint').textContent = '已选 ' + cities.length + ' / ' + MAX;
+  }
+
+  function toggle(p) {
+    var idx = -1;
+    cities.forEach(function (c, i) { if (c.tz === p[1]) idx = i; });
+    if (idx >= 0) cities.splice(idx, 1);
+    else if (cities.length < MAX) cities.push({ name: p[0], tz: p[1] });
+    renderPicker();
+    C.state.set('cities', cities).catch(function (err) { C.ui.notify(err.message, 'error'); });
+  }
+
+  function setEditing(on) {
+    editing = on;
+    $('picker').hidden = !on;
+    $('edit').textContent = on ? '完成' : '编辑';
+    if (on) {
+      $('zones').hidden = true;
+      C.ui.state($('state'), 'ready');
+      renderPicker();
+    } else {
+      renderZones();
+    }
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    var now = new Date();
+    timer = setTimeout(function () { if (!editing) renderZones(); schedule(); }, 60000 - now.getSeconds() * 1000 - now.getMilliseconds() + 20);
+  }
+
+  function load() {
+    return C.state.get('cities').then(function (value) {
+      cities = Array.isArray(value) ? value.filter(function (c) { return c && c.tz && c.name; }).slice(0, MAX) : [];
+      if (editing) renderPicker(); else renderZones();
+    }).catch(function (err) {
+      $('zones').hidden = true;
+      C.ui.state($('state'), 'error', err.message);
+    });
+  }
+
+  $('edit').addEventListener('click', function () { setEditing(!editing); });
+  $('done').addEventListener('click', function () { setEditing(false); });
+
+  C.ready().then(function () {
+    C.ui.state($('state'), 'loading');
+    load().then(schedule);
+    C.subscribe(['state:cities'], function () { if (!editing) load(); });
+    C.on('visibility', function (e) { if (e.visible) { renderZones(); schedule(); } else clearTimeout(timer); });
+  });
+})();
+</script>
+</body>
+</html>

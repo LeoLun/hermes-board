@@ -1,0 +1,38 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "weather",
+  "title": "天气",
+  "description": "当前天气与未来三天预报，默认北京，可在卡片内更换城市",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["4x4", "8x4", "8x8"],
+  "defaultSize": "8x8",
+  "scripts": {
+    "fetch": {
+      "file": "fetch_weather.py",
+      "description": "从 Open-Meteo 获取天气，写入 current、forecast 和 temp；传入 city 时先更换城市",
+      "schedule": "every 30m",
+      "runOnInstall": true,
+      "callable": true,
+      "timeoutSec": 60,
+      "minIntervalSec": 5,
+      "args": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "maxLength": 40, "description": "新的城市名；不传时使用当前城市" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "datasets": {
+    "current": { "description": "当前天气 {city, temp, feelsLike, humidity, wind, code, text, kind, isDay, high, low}" },
+    "forecast": { "description": "未来三天 [{date, code, text, kind, max, min, pop}]" }
+  },
+  "series": {
+    "temp": { "description": "气温记录（每次刷新一点）", "retention": { "maxAgeDays": 7, "maxPoints": 2000 } }
+  },
+  "state": {
+    "city": { "description": "城市名", "default": "北京" }
+  }
+}

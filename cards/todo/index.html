@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>待办</title>
+<style>
+  .main { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+  .add { display: flex; gap: 8px; flex: none; }
+  .items { flex: 1; min-height: 0; }
+  .item { justify-content: flex-start; padding: 6px 0; }
+  .check { appearance: none; flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--hb-ink-muted);
+           background: transparent; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+           color: var(--hb-on-accent); transition: transform var(--hb-motion) ease; }
+  .check:active { transform: scale(0.9); }
+  .check svg { width: 12px; height: 12px; display: none; }
+  .item.is-done .check { background: var(--hb-accent); border-color: var(--hb-accent); }
+  .item.is-done .check svg { display: block; }
+  .item-text { flex: 1; min-width: 0; word-break: break-word; }
+  .item.is-done .item-text { color: var(--hb-ink-muted); text-decoration: line-through; }
+  .del { visibility: hidden; padding: 2px 8px; }
+  .item:hover .del, .item:focus-within .del { visibility: visible; }
+  .foot { display: flex; justify-content: space-between; align-items: center; color: var(--hb-ink-muted); flex: none; }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <h2 class="hb-title">待办</h2>
+    <span class="hb-fine hb-muted" id="summary"></span>
+  </header>
+  <section class="main" id="main" hidden>
+    <div class="add">
+      <input class="hb-input" id="input" maxlength="120" placeholder="添加待办，回车确认" autocomplete="off" aria-label="新的待办">
+      <button class="hb-btn" id="add" type="button">添加</button>
+    </div>
+    <ul class="hb-list items" id="items"></ul>
+    <div class="hb-state" id="empty"></div>
+    <div class="hb-fine foot">
+      <span id="left"></span>
+      <button class="hb-btn hb-btn--utility" id="clear" type="button">清除已完成</button>
+    </div>
+  </section>
+  <div class="hb-state" id="state"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var C = HermesCard;
+  var MAX = 200;
+  var CHECK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>';
+  var items = [];
+  var pending = null;
+  var dirty = false;
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function sorted() {
+    return items.slice().sort(function (a, b) {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      return a.done ? (b.doneAt || 0) - (a.doneAt || 0) : a.createdAt - b.createdAt;
+    });
+  }
+
+  function persist() {
+    dirty = true;
+    clearTimeout(pending);
+    pending = setTimeout(function () {
+      pending = null;
+      C.state.set('items', items).then(function () { dirty = false; }).catch(function (err) {
+        C.ui.notify('待办保存失败：' + err.message, 'error');
+      });
+    }, 300);
+  }
+
+  function render() {
+    var list = $('items');
+    list.textContent = '';
+    sorted().forEach(function (it) {
+      var li = document.createElement('li');
+      li.className = 'hb-row item' + (it.done ? ' is-done' : '');
+      var check = document.createElement('button');
+      check.type = 'button';
+      check.className = 'check';
+      check.setAttribute('role', 'checkbox');
+      check.setAttribute('aria-checked', it.done ? 'true' : 'false');
+      check.setAttribute('aria-label', it.done ? '标记为未完成' : '标记为完成');
+      check.innerHTML = CHECK;
+      check.addEventListener('click', function () {
+        it.done = !it.done;
+        it.doneAt = it.done ? Date.now() : null;
+        render();
+        persist();
+      });
+      var text = document.createElement('span');
+      text.className = 'hb-body item-text';
+      text.textContent = it.text;
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'hb-btn hb-btn--utility del';
+      del.textContent = '删除';
+      del.setAttribute('aria-label', '删除“' + it.text + '”');
+      del.addEventListener('click', function () {
+        items = items.filter(function (x) { return x.id !== it.id; });
+        render();
+        persist();
+      });
+      li.appendChild(check);
+      li.appendChild(text);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+    var left = items.filter(function (x) { return !x.done; }).length;
+    var done = items.length - left;
+    list.hidden = items.length === 0;
+    C.ui.state($('empty'), items.length ? 'ready' : 'empty', '没有待办，轻松一下');
+    $('left').textContent = items.length ? left + ' 项未完成' : '';
+    $('summary').textContent = items.length ? done + ' / ' + items.length : '';
+    $('clear').hidden = done === 0;
+  }
+
+  function add() {
+    var input = $('input');
+    var text = input.value.trim();
+    if (!text) { input.focus(); return; }
+    if (items.length >= MAX) { C.ui.notify('最多 ' + MAX + ' 项，先清除一些已完成的吧', 'warning'); return; }
+    items.push({ id: uid(), text: text, done: false, createdAt: Date.now(), doneAt: null });
+    input.value = '';
+    render();
+    persist();
+  }
+
+  $('add').addEventListener('click', add);
+  $('input').addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
+  $('clear').addEventListener('click', function () {
+    items = items.filter(function (x) { return !x.done; });
+    render();
+    persist();
+  });
+
+  function load() {
+    return C.state.get('items').then(function (value) {
+      items = Array.isArray(value) ? value.filter(function (x) { return x && typeof x.text === 'string'; }) : [];
+      items.forEach(function (x) { if (!x.id) x.id = uid(); if (!x.createdAt) x.createdAt = 0; x.done = !!x.done; });
+      $('main').hidden = false;
+      C.ui.state($('state'), 'ready');
+      render();
+    }).catch(function (err) {
+      $('main').hidden = true;
+      C.ui.state($('state'), 'error', err.message);
+    });
+  }
+
+  C.ready().then(function () {
+    C.ui.state($('state'), 'loading');
+    load();
+    C.subscribe(['state:items'], function () { if (!dirty) load(); });
+  });
+})();
+</script>
+</body>
+</html>

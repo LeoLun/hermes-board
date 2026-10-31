@@ -1,0 +1,13 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "todo",
+  "title": "待办",
+  "description": "简单的待办清单：新增、勾选、删除",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["6x6", "8x8"],
+  "defaultSize": "8x8",
+  "state": {
+    "items": { "description": "待办列表 [{id, text, done, createdAt, doneAt}]", "default": [] }
+  }
+}

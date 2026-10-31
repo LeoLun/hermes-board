@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>番茄钟</title>
+<style>
+  .body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; flex: 1; min-height: 0; }
+  .ring { width: min(56vh, 70vw); height: min(56vh, 70vw); flex: none; }
+  .ring .hb-chart__center { font-size: min(10vh, 12vw); font-weight: 300; letter-spacing: -1px; fill: var(--hb-ink); }
+  .phase { color: var(--hb-ink-2); text-align: center; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .tally { color: var(--hb-ink-muted); }
+  html[data-size="4x4"] .ring { width: min(48vh, 60vw); height: min(48vh, 60vw); }
+  html[data-size="4x4"] .ring .hb-chart__center { font-size: min(11vh, 13vw); }
+  html[data-size="4x4"] .body { gap: 8px; }
+  html[data-size="4x4"] #skip, html[data-size="4x4"] .tally, html[data-size="4x4"] .phase { display: none; }
+  html[data-size="4x4"] .controls .hb-btn { padding: 4px 10px; font-size: 12px; }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <h2 class="hb-title" id="title">番茄钟</h2>
+    <span class="hb-fine tally" id="tally"></span>
+  </header>
+  <section class="body" id="body" hidden>
+    <div class="ring" id="ring" role="timer" aria-live="off"></div>
+    <div class="hb-body phase" id="phase"></div>
+    <div class="controls">
+      <button class="hb-btn" id="primary" type="button">开始</button>
+      <button class="hb-btn hb-btn--secondary" id="reset" type="button">重置</button>
+      <button class="hb-btn hb-btn--utility" id="skip" type="button">跳过</button>
+    </div>
+  </section>
+  <div class="hb-state" id="state"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var C = HermesCard;
+  var FOCUS = 25 * 60 * 1000;
+  var BREAK = 5 * 60 * 1000;
+  var REMIND_ID = 'phase-end';
+  var s = null;
+  var timer = null;
+
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+  function total(phase) { return phase === 'break' ? BREAK : FOCUS; }
+  function normalize(v) {
+    v = v && typeof v === 'object' ? v : {};
+    var phase = v.phase === 'break' ? 'break' : 'focus';
+    var out = {
+      phase: phase,
+      running: !!v.running && typeof v.endsAt === 'number',
+      endsAt: typeof v.endsAt === 'number' ? v.endsAt : null,
+      remainingMs: typeof v.remainingMs === 'number' ? Math.max(0, Math.min(total(phase), v.remainingMs)) : total(phase),
+      completed: typeof v.completed === 'number' ? v.completed : 0,
+      day: typeof v.day === 'string' ? v.day : ''
+    };
+    if (out.day !== today()) { out.completed = 0; out.day = today(); }
+    return out;
+  }
+  function remaining() { return s.running ? Math.max(0, s.endsAt - Date.now()) : s.remainingMs; }
+  function mmss(ms) {
+    var sec = Math.ceil(ms / 1000);
+    var m = Math.floor(sec / 60), r = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+  }
+
+  function save() {
+    return C.state.set('session', s).catch(function (err) { C.ui.notify('保存失败：' + err.message, 'error'); });
+  }
+  function remind() {
+    if (!s.running) return Promise.resolve();
+    return C.ui.remind({
+      id: REMIND_ID,
+      at: s.endsAt,
+      title: '番茄钟',
+      message: s.phase === 'focus' ? '专注时间到，休息 5 分钟吧' : '休息结束，开始下一个番茄'
+    }).catch(function () {});
+  }
+  function cancelRemind() { return C.ui.cancelRemind(REMIND_ID).catch(function () {}); }
+
+  function advance(countFocus) {
+    if (s.phase === 'focus') {
+      if (countFocus) s.completed += 1;
+      s.phase = 'break';
+    } else {
+      s.phase = 'focus';
+    }
+    s.running = false;
+    s.endsAt = null;
+    s.remainingMs = total(s.phase);
+  }
+
+  function render() {
+    var left = remaining();
+    var ratio = left / total(s.phase);
+    C.chart.ring($('ring'), ratio, { label: mmss(left), thickness: 10 });
+    var phaseName = s.phase === 'focus' ? '专注' : '休息';
+    var full = left >= total(s.phase);
+    $('title').textContent = '番茄钟 · ' + phaseName;
+    $('phase').textContent = s.running ? (s.phase === 'focus' ? '专注中，保持节奏' : '休息一下，离开屏幕')
+      : full ? (s.phase === 'focus' ? '准备开始一个 25 分钟的番茄' : '开始 5 分钟休息') : '已暂停';
+    $('primary').textContent = s.running ? '暂停' : full ? (s.phase === 'focus' ? '开始专注' : '开始休息') : '继续';
+    $('reset').disabled = !s.running && full && s.phase === 'focus';
+    $('tally').textContent = '今天 ' + s.completed + ' 个';
+  }
+
+  function tick() {
+    clearTimeout(timer);
+    if (s.running && Date.now() >= s.endsAt) {
+      advance(true);
+      save();
+    }
+    render();
+    if (s.running) timer = setTimeout(tick, 1000 - (Date.now() % 1000) + 10);
+  }
+
+  $('primary').addEventListener('click', function () {
+    if (s.running) {
+      s.remainingMs = remaining();
+      s.running = false;
+      s.endsAt = null;
+      cancelRemind();
+    } else {
+      s.running = true;
+      s.endsAt = Date.now() + s.remainingMs;
+      remind();
+    }
+    save();
+    tick();
+  });
+  $('reset').addEventListener('click', function () {
+    s.phase = 'focus';
+    s.running = false;
+    s.endsAt = null;
+    s.remainingMs = FOCUS;
+    cancelRemind();
+    save();
+    tick();
+  });
+  $('skip').addEventListener('click', function () {
+    advance(false);
+    cancelRemind();
+    save();
+    tick();
+  });
+
+  function load() {
+    return C.state.get('session').then(function (value) {
+      s = normalize(value);
+      $('body').hidden = false;
+      C.ui.state($('state'), 'ready');
+      if (s.running && Date.now() < s.endsAt) remind();
+      tick();
+    }).catch(function (err) {
+      $('body').hidden = true;
+      C.ui.state($('state'), 'error', err.message);
+    });
+  }
+
+  C.ready().then(function () {
+    C.ui.state($('state'), 'loading');
+    load();
+    C.subscribe(['state:session'], load);
+    C.on('resize', function () { if (s) render(); });
+    C.on('visibility', function (e) { if (!s) return; if (e.visible) tick(); else clearTimeout(timer); });
+  });
+})();
+</script>
+</body>
+</html>

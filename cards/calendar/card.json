@@ -1,0 +1,10 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "calendar",
+  "title": "日历",
+  "description": "月历，高亮今天，可前后翻月",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["4x4", "6x6", "8x8"],
+  "defaultSize": "8x8"
+}

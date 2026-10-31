@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>时钟</title>
+<style>
+  .hb-card { justify-content: center; }
+  .face { display: flex; flex-direction: column; justify-content: center; gap: 6px; flex: 1; min-height: 0; }
+  .time { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+  .hm { font-weight: 300; font-size: min(42vh, 22vw); line-height: 1; letter-spacing: -2px; color: var(--hb-ink); }
+  .sec { font-weight: 400; font-size: min(12vh, 6vw); color: var(--hb-ink-muted); }
+  .date { color: var(--hb-ink-2); }
+  .meta { color: var(--hb-ink-muted); }
+  html[data-size="4x4"] .hm { font-size: min(30vh, 30vw); letter-spacing: -1px; }
+  html[data-size="4x4"] .sec { display: none; }
+  html[data-size="4x4"] .meta { display: none; }
+  html[data-size="6x4"] .hm { font-size: min(38vh, 24vw); }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <div class="face" role="timer" aria-live="off">
+    <div class="time"><span class="hm" id="hm">--:--</span><span class="sec" id="sec">--</span></div>
+    <div class="hb-body-lg date" id="date"></div>
+    <div class="hb-fine meta" id="meta"></div>
+  </div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var WEEK = '日一二三四五六';
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var timer = null;
+
+  function weekOfYear(d) {
+    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    var day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);
+    var start = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil(((t - start) / 86400000 + 1) / 7);
+  }
+  function offsetLabel(d) {
+    var m = -d.getTimezoneOffset();
+    var sign = m >= 0 ? '+' : '−';
+    m = Math.abs(m);
+    return 'UTC' + sign + Math.floor(m / 60) + (m % 60 ? ':' + pad(m % 60) : '');
+  }
+
+  function tick() {
+    var d = new Date();
+    $('hm').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    $('sec').textContent = pad(d.getSeconds());
+    $('date').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 星期' + WEEK.charAt(d.getDay());
+    $('meta').textContent = d.getFullYear() + '年 · 第 ' + weekOfYear(d) + ' 周 · ' + offsetLabel(d);
+    timer = setTimeout(tick, 1000 - d.getMilliseconds() + 5);
+  }
+
+  HermesCard.ready().then(function () {
+    tick();
+    HermesCard.on('visibility', function (e) {
+      clearTimeout(timer);
+      if (e.visible) tick();
+    });
+  });
+})();
+</script>
+</body>
+</html>

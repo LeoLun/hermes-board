@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>便签</title>
+<style>
+  .editor { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+  .text { flex: 1; min-height: 0; padding: 12px; border-color: transparent; background: var(--hb-surface-2); line-height: 1.6; overflow-y: auto; }
+  .text:focus { border-color: var(--hb-hairline); }
+  .foot { display: flex; justify-content: space-between; align-items: center; color: var(--hb-ink-muted); }
+  .status.is-error { color: var(--hb-critical); }
+  html[data-size="8x4"] .text { padding: 8px 12px; }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <h2 class="hb-title">便签</h2>
+    <span class="hb-fine status" id="status"></span>
+  </header>
+  <section class="editor" id="editor" hidden>
+    <textarea class="hb-input text" id="text" maxlength="20000" placeholder="写点什么…" spellcheck="false" aria-label="便签内容"></textarea>
+    <div class="hb-fine foot"><span id="count"></span></div>
+  </section>
+  <div class="hb-state" id="state"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var C = HermesCard;
+  var DEBOUNCE = 800;
+  var area = $('text');
+  var saved = '';
+  var timer = null;
+  var saving = null;
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function setStatus(text, isError) {
+    $('status').textContent = text;
+    $('status').classList.toggle('is-error', !!isError);
+  }
+  function count() { $('count').textContent = area.value.length + ' 字'; }
+
+  function save() {
+    clearTimeout(timer);
+    timer = null;
+    var value = area.value;
+    if (value === saved) return saving || Promise.resolve();
+    setStatus('正在保存…');
+    saving = C.state.set('text', value).then(function () {
+      saved = value;
+      var d = new Date();
+      setStatus('已保存 ' + pad(d.getHours()) + ':' + pad(d.getMinutes()));
+    }).catch(function (err) {
+      setStatus('保存失败，将重试', true);
+      C.ui.notify('便签保存失败：' + err.message, 'error');
+      timer = setTimeout(save, 5000);
+    }).finally(function () { saving = null; });
+    return saving;
+  }
+
+  area.addEventListener('input', function () {
+    count();
+    setStatus('未保存');
+    clearTimeout(timer);
+    timer = setTimeout(save, DEBOUNCE);
+  });
+  area.addEventListener('blur', save);
+
+  function load() {
+    return C.state.get('text').then(function (value) {
+      var text = typeof value === 'string' ? value : '';
+      if (document.activeElement === area && area.value !== saved) return;
+      saved = text;
+      area.value = text;
+      count();
+      $('editor').hidden = false;
+      C.ui.state($('state'), 'ready');
+    }).catch(function (err) {
+      $('editor').hidden = true;
+      C.ui.state($('state'), 'error', err.message);
+    });
+  }
+
+  C.ready().then(function () {
+    C.ui.state($('state'), 'loading');
+    load();
+    C.subscribe(['state:text'], function () { if (timer === null && !saving) load(); });
+    C.on('visibility', function (e) { if (!e.visible) save(); });
+  });
+})();
+</script>
+</body>
+</html>

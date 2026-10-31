@@ -1,0 +1,16 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "countdown",
+  "title": "倒数日",
+  "description": "距离某个日子还有几天，默认元旦，可修改名称和日期",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["4x4", "6x4"],
+  "defaultSize": "4x4",
+  "state": {
+    "target": {
+      "description": "{name, date}；date 为 YYYY-MM-DD，留空表示下一个元旦",
+      "default": { "name": "元旦", "date": "" }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "clock",
+  "title": "时钟",
+  "description": "本机当前时间与日期",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["4x4", "6x4", "8x4"],
+  "defaultSize": "8x4"
+}
