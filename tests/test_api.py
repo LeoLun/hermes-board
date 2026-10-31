@@ -133,6 +133,10 @@ class ApiTest(BoardTestCase):
         self.assert_error(self.post("/cards/alpha/runs", {"script": "nope"}), 404, "not_found")
         self.assert_error(self.post("/cards/alpha/runs", {"script": "fetch", "args": {"n": -1}}), 400, "invalid")
         self.assert_error(self.get("/runs/nope"), 404, "not_found")
+        manual = self.post("/cards/alpha/runs", {"script": "fetch", "trigger": "manual"}).json()
+        self.board.runner.wait(manual["runId"], timeout=20)
+        self.assertEqual(self.get(f"/runs/{manual['runId']}").json()["trigger"], "manual")
+        self.assert_error(self.post("/cards/alpha/runs", {"script": "fetch", "trigger": "cron"}), 400, "invalid")
 
     def test_ai_unavailable_and_missing(self):
         pkg = cardkit.package("gamma", ai={"pick": {"system": "选择最快的节点", "inputSchema": {"type": "object"},

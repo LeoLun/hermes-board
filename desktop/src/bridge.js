@@ -105,10 +105,11 @@ export function createRateWindow(limit, windowMs, now) {
  *                                   openExternal(url), contextmenu(cardId, {x, y})
  * @param {() => void} [o.onReady]
  * @param {(topics: string[]) => void} [o.onSubscribe]
+ * @param {(message: string) => void} [o.onError]   first uncaught error inside the card (one-way message)
  * @param {() => number} [o.now]
  * @param {(...args: any[]) => void} [o.log]
  */
-export function createBridge({ cardId, token, post, getEnv, api, ui, onReady, onSubscribe, now = () => Date.now(), log = () => {} }) {
+export function createBridge({ cardId, token, post, getEnv, api, ui, onReady, onSubscribe, onError, now = () => Date.now(), log = () => {} }) {
   const requests = createRateWindow(B.requestsPerSecond, 1000, now);
   const aiWindow = createRateWindow(B.aiPerMinute, 60000, now);
   let aiInFlight = 0;
@@ -258,6 +259,10 @@ export function createBridge({ cardId, token, post, getEnv, api, ui, onReady, on
     }
     if (msg.type === 'request') {
       handleRequest(msg);
+      return true;
+    }
+    if (msg.type === 'error') {
+      onError?.(String(msg.message ?? '卡片脚本出错').slice(0, 200));
       return true;
     }
     return false;

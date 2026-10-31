@@ -1,6 +1,6 @@
 // Card runtime entry. Bundled as an IIFE and injected by the host as the first <script> in <head>,
 // preceded by `window.__HB_BOOT__ = {...}`. The mount token lives only in this closure.
-import { BoardError, createClient, topicMatches, waitForRun } from './protocol.js';
+import { BoardError, createClient, makeMessage, topicMatches, waitForRun } from './protocol.js';
 import fmt from './fmt.js';
 import * as charts from './chart.js';
 import { setState, setUpdated } from './ui.js';
@@ -32,6 +32,17 @@ import { setState, setUpdated } from './ui.js';
 
   const client = createClient({ post: (msg) => postToParent(msg, '*'), token: String(boot.token || '') });
   const root = win.document.documentElement;
+
+  // First uncaught error per load is reported so the host can mark only this card as failed.
+  let errorReported = false;
+  function reportError(reason) {
+    if (errorReported) return;
+    errorReported = true;
+    const text = reason && reason.message ? reason.message : String(reason ?? '卡片脚本出错');
+    postToParent(makeMessage('error', String(boot.token || ''), { message: text.slice(0, 200) }), '*');
+  }
+  addListener('error', (event) => reportError(event.error || event.message));
+  addListener('unhandledrejection', (event) => reportError(event.reason));
 
   function applyEnv(env) {
     if (!env) return;

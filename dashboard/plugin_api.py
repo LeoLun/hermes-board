@@ -180,7 +180,14 @@ def card_state_delete(card_id: str, key: str) -> dict[str, Any]:
 @api
 def start_run(card_id: str, payload: Any = Body(...)) -> dict[str, Any]:
     body = _body(payload)
-    return get_board().runner.start(check_card_id(card_id), body.get("script"), body.get("args"), trigger="action")
+    # Cards always run as "action" (callable scripts only, min interval applies); the Desktop host's
+    # "立即运行" menu uses "manual", which may run any declared script.
+    trigger = body.get("trigger", "action")
+    if trigger not in ("action", "manual"):
+        from hermes_board_core.errors import BoardError
+
+        raise BoardError("invalid", "trigger 只能是 action 或 manual")
+    return get_board().runner.start(check_card_id(card_id), body.get("script"), body.get("args"), trigger=trigger)
 
 
 @router.get("/cards/{card_id}/runs")
