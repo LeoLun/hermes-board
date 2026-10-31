@@ -11,7 +11,7 @@
 
 ## 1. 技术验证（先做，任一项不成立就回到 workflow-spec）
 
-- [ ] 1.1 V1：最小 Desktop 插件里用 `SandboxedFrame` 加载 base64 `data:` 文档，验证注入的 meta CSP（`fetch` 被拦截）、双向 postMessage，以及用 `event.source` 加令牌做认证；测量 20 个 iframe 的内存占用。（进展：无头 Chromium 中已验证 data: 文档、meta CSP 拦截 fetch、双向 postMessage、自导航二次 load；Desktop 内 SandboxedFrame 与内存测量待 G3 授权）
+- [ ] 1.1 V1：最小 Desktop 插件里用 `SandboxedFrame` 加载 base64 `data:` 文档，验证注入的 meta CSP（`fetch` 被拦截）、双向 postMessage，以及用 `event.source` 加令牌做认证；测量 20 个 iframe 的内存占用。（进展：无头 Chromium 中已验证 data: 文档、meta CSP 拦截 fetch、双向 postMessage、自导航二次 load；17:14 又用真实运行时 + bridge 在无头 Chromium 做了端到端验证（.work/e2e/，CDP 驱动），全部通过；Desktop 内 SandboxedFrame 与内存测量待 G3 授权）
 - [x] 1.2 V2：在插件进程内调用 `cron.jobs` 的创建、更新、删除、暂停、恢复接口；确认 profile 隔离，以及 `scripts/hermes-board/<card>/x.py` 这种子目录脚本能按 no-agent 方式运行；确认 SDK 能根据路径反推 `HERMES_HOME`。
 - [ ] 1.3 V3：在 `register(ctx)` 中保存 `ctx.llm`，确认 `plugin_api.py` 能调用 `complete_structured`。（待 G3 授权；单元测试已用假 llm 覆盖）
 - [ ] 1.4 确认 `WorkspacePageHeaderControl`、`useTheme().resolvedMode`、`ctx.setTimeout`、`ctx.os.notify` 在目标版本中可用，并确定 `requires_hermes` 的最低版本。（`requires_hermes: ">=0.22.2"` 已确定；Desktop 侧接口待 V1 真机确认）
@@ -61,9 +61,9 @@
 
 ## 8. 卡片运行时与设计标准（specs: card-runtime-bridge、card-package）
 
-- [ ] 8.1 `runtime/card-tokens.css`：浅色和深色令牌、字号阶梯、组件类、减少动效的适配。
-- [ ] 8.2 `runtime/card-runtime.js`：握手、请求和响应、事件、`html[data-*]`、右键转发、`run` 的 wait 封装、`fmt`、`chart`（line/sparkline/bar/ring）、`ui.state`。
-- [ ] 8.3 JS 测试：协议编解码、格式化函数、图表输出的 SVG 结构。
+- [x] 8.1 `runtime/card-tokens.css`：浅色和深色令牌、字号阶梯、组件类、减少动效的适配。
+- [x] 8.2 `runtime/card-runtime.js`：握手、请求和响应、事件、`html[data-*]`、右键转发、`run` 的 wait 封装、`fmt`、`chart`（line/sparkline/bar/ring）、`ui.state`。
+- [x] 8.3 JS 测试：协议编解码、格式化函数、图表输出的 SVG 结构。
 
 ## 9. Desktop 插件（spec: board-desktop、card-runtime-bridge）
 

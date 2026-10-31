@@ -1,0 +1,16 @@
+{
+  "name": "hermes-board",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hermes Board: customizable card board for Hermes Desktop + remote Hermes",
+  "scripts": {
+    "build": "node scripts/build-desktop.mjs",
+    "test:js": "node --test \"runtime/test/*.test.mjs\" \"desktop/test/*.test.mjs\"",
+    "check": "node scripts/check-bundle.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  },
+  "packageManager": "pnpm@9.15.4"
+}
