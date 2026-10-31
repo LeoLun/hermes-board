@@ -1,0 +1,95 @@
+{
+  "defaultLayout": [
+    { "id": "weather", "card": "weather", "x": 0, "y": 0, "w": 8, "h": 8 },
+    { "id": "clock", "card": "clock", "x": 8, "y": 0, "w": 8, "h": 4 },
+    { "id": "world-clock", "card": "world-clock", "x": 8, "y": 4, "w": 4, "h": 4 },
+    { "id": "countdown", "card": "countdown", "x": 12, "y": 4, "w": 4, "h": 4 },
+    { "id": "calendar", "card": "calendar", "x": 16, "y": 0, "w": 8, "h": 8 },
+    { "id": "pomodoro", "card": "pomodoro", "x": 0, "y": 8, "w": 8, "h": 8 },
+    { "id": "note", "card": "note", "x": 8, "y": 8, "w": 8, "h": 8 },
+    { "id": "todo", "card": "todo", "x": 16, "y": 8, "w": 8, "h": 8 }
+  ],
+  "firstFit": [
+    { "name": "空看板放在左上角", "items": [], "w": 8, "h": 4, "expect": { "x": 0, "y": 0 } },
+    { "name": "铺满的默认布局放到底部", "items": "defaultLayout", "w": 4, "h": 4, "expect": { "x": 0, "y": 16 } },
+    { "name": "放到已有卡片右侧", "items": [{ "id": "a", "card": "a", "x": 0, "y": 0, "w": 8, "h": 8 }], "w": 6, "h": 4, "expect": { "x": 8, "y": 0 } },
+    { "name": "填入中间空隙", "items": [{ "id": "a", "card": "a", "x": 0, "y": 0, "w": 4, "h": 4 }, { "id": "b", "card": "b", "x": 8, "y": 0, "w": 4, "h": 4 }], "w": 4, "h": 4, "expect": { "x": 4, "y": 0 } },
+    { "name": "宽卡片下移到第一个放得下的位置", "items": [{ "id": "a", "card": "a", "x": 0, "y": 0, "w": 12, "h": 8 }, { "id": "b", "card": "b", "x": 12, "y": 0, "w": 12, "h": 6 }], "w": 12, "h": 6, "expect": { "x": 12, "y": 6 } }
+  ],
+  "pushDown": [
+    {
+      "name": "移到邻居位置时把它推下去",
+      "items": [{ "id": "a", "card": "a", "x": 0, "y": 0, "w": 4, "h": 4 }, { "id": "b", "card": "b", "x": 4, "y": 0, "w": 4, "h": 4 }],
+      "active": { "id": "a", "card": "a", "x": 4, "y": 0, "w": 4, "h": 4 },
+      "expect": [{ "id": "a", "card": "a", "x": 4, "y": 0, "w": 4, "h": 4 }, { "id": "b", "card": "b", "x": 4, "y": 4, "w": 4, "h": 4 }]
+    },
+    {
+      "name": "放大后连锁推挤",
+      "items": [
+        { "id": "a", "card": "a", "x": 0, "y": 0, "w": 8, "h": 4 },
+        { "id": "b", "card": "b", "x": 0, "y": 4, "w": 8, "h": 4 },
+        { "id": "c", "card": "c", "x": 0, "y": 8, "w": 8, "h": 4 },
+        { "id": "d", "card": "d", "x": 8, "y": 0, "w": 4, "h": 4 }
+      ],
+      "active": { "id": "a", "card": "a", "x": 0, "y": 0, "w": 8, "h": 8 },
+      "expect": [
+        { "id": "a", "card": "a", "x": 0, "y": 0, "w": 8, "h": 8 },
+        { "id": "b", "card": "b", "x": 0, "y": 8, "w": 8, "h": 4 },
+        { "id": "c", "card": "c", "x": 0, "y": 12, "w": 8, "h": 4 },
+        { "id": "d", "card": "d", "x": 8, "y": 0, "w": 4, "h": 4 }
+      ]
+    },
+    {
+      "name": "没有冲突时其他卡片不动",
+      "items": [{ "id": "a", "card": "a", "x": 0, "y": 0, "w": 4, "h": 4 }, { "id": "b", "card": "b", "x": 10, "y": 0, "w": 4, "h": 4 }],
+      "active": { "id": "a", "card": "a", "x": 0, "y": 4, "w": 4, "h": 4 },
+      "expect": [{ "id": "a", "card": "a", "x": 0, "y": 4, "w": 4, "h": 4 }, { "id": "b", "card": "b", "x": 10, "y": 0, "w": 4, "h": 4 }]
+    }
+  ],
+  "snapResize": [
+    { "name": "右下手柄吸附到最近的预设", "item": { "x": 0, "y": 0, "w": 4, "h": 4 }, "handle": "br", "desired": { "w": 6.2, "h": 3.9 }, "allowed": ["4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x6", "12x8"], "expect": { "x": 0, "w": 6, "h": 4 } },
+    { "name": "左下手柄固定右上角", "item": { "x": 10, "y": 0, "w": 6, "h": 4 }, "handle": "bl", "desired": { "w": 7.6, "h": 4.2 }, "allowed": ["4x4", "6x4", "8x4"], "expect": { "x": 8, "w": 8, "h": 4 } },
+    { "name": "靠右边时只考虑放得下的尺寸", "item": { "x": 18, "y": 0, "w": 4, "h": 4 }, "handle": "br", "desired": { "w": 8, "h": 8 }, "allowed": ["4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x6", "12x8"], "expect": { "x": 18, "w": 6, "h": 6 } },
+    { "name": "距离相同时取面积更小的", "item": { "x": 0, "y": 0, "w": 4, "h": 4 }, "handle": "br", "desired": { "w": 5, "h": 5 }, "allowed": ["4x4", "6x6"], "expect": { "x": 0, "w": 4, "h": 4 } },
+    { "name": "没有候选时保持原尺寸", "item": { "x": 16, "y": 0, "w": 8, "h": 8 }, "handle": "br", "desired": { "w": 12, "h": 8 }, "allowed": ["12x8"], "expect": { "x": 16, "w": 8, "h": 8 } }
+  ],
+  "arrange": [
+    { "name": "默认布局已经最紧凑", "items": "defaultLayout", "unchanged": true },
+    {
+      "name": "消除纵向空隙",
+      "items": [{ "id": "a", "card": "a", "x": 0, "y": 0, "w": 8, "h": 4 }, { "id": "b", "card": "b", "x": 0, "y": 10, "w": 8, "h": 4 }],
+      "unchanged": false,
+      "expect": [{ "id": "a", "card": "a", "x": 0, "y": 0, "w": 8, "h": 4 }, { "id": "b", "card": "b", "x": 8, "y": 0, "w": 8, "h": 4 }]
+    },
+    {
+      "name": "面积优先的顺序更矮时选它",
+      "items": [
+        { "id": "small", "card": "small", "x": 0, "y": 0, "w": 4, "h": 4 },
+        { "id": "big", "card": "big", "x": 0, "y": 4, "w": 12, "h": 8 },
+        { "id": "big2", "card": "big2", "x": 12, "y": 4, "w": 12, "h": 8 }
+      ],
+      "unchanged": false,
+      "expect": [
+        { "id": "small", "card": "small", "x": 0, "y": 8, "w": 4, "h": 4 },
+        { "id": "big", "card": "big", "x": 0, "y": 0, "w": 12, "h": 8 },
+        { "id": "big2", "card": "big2", "x": 12, "y": 0, "w": 12, "h": 8 }
+      ]
+    }
+  ],
+  "validate": {
+    "cards": { "weather": ["4x4", "8x4", "8x8"], "clock": ["4x4", "6x4", "8x4"] },
+    "cases": [
+      { "name": "合法布局", "items": [{ "id": "weather", "card": "weather", "x": 0, "y": 0, "w": 8, "h": 8 }, { "id": "clock", "card": "clock", "x": 8, "y": 0, "w": 8, "h": 4 }], "error": null },
+      { "name": "重叠", "items": [{ "id": "weather", "card": "weather", "x": 0, "y": 0, "w": 8, "h": 8 }, { "id": "clock", "card": "clock", "x": 4, "y": 0, "w": 8, "h": 4 }], "error": "重叠" },
+      { "name": "越界", "items": [{ "id": "clock", "card": "clock", "x": 20, "y": 0, "w": 8, "h": 4 }], "error": "越界" },
+      { "name": "不是预设尺寸", "items": [{ "id": "weather", "card": "weather", "x": 0, "y": 0, "w": 5, "h": 5 }], "error": "预设" },
+      { "name": "不在卡片允许的尺寸里", "items": [{ "id": "clock", "card": "clock", "x": 0, "y": 0, "w": 4, "h": 6 }], "error": "允许的尺寸" },
+      { "name": "未安装的卡片", "items": [{ "id": "ghost", "card": "ghost", "x": 0, "y": 0, "w": 4, "h": 4 }], "error": "未安装" },
+      { "name": "重复出现", "items": [{ "id": "weather", "card": "weather", "x": 0, "y": 0, "w": 4, "h": 4 }, { "id": "weather", "card": "weather", "x": 8, "y": 0, "w": 4, "h": 4 }], "error": "重复" },
+      { "name": "实例 id 与卡片不同", "items": [{ "id": "w2", "card": "weather", "x": 0, "y": 0, "w": 4, "h": 4 }], "error": "实例" },
+      { "name": "未知字段", "items": [{ "id": "clock", "card": "clock", "x": 0, "y": 0, "w": 4, "h": 4, "z": 1 }], "error": "未知字段" },
+      { "name": "已在布局中的不可用卡片保留占位", "items": [{ "id": "ghost", "card": "ghost", "x": 0, "y": 0, "w": 4, "h": 4 }], "preserved": ["ghost"], "error": null },
+      { "name": "超过 64 项", "items": "tooMany", "error": "最多" }
+    ]
+  }
+}

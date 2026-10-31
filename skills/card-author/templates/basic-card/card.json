@@ -1,0 +1,28 @@
+{
+  "schema": "hermes-board/card@1",
+  "id": "basic-card",
+  "title": "示例指标",
+  "description": "示例：显示一个指标和最近趋势，可手动刷新",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "sizes": ["4x4", "6x4", "8x4"],
+  "defaultSize": "4x4",
+  "scripts": {
+    "fetch": {
+      "file": "fetch.py",
+      "description": "采集指标并写入 current 和 history",
+      "schedule": "every 5m",
+      "runOnInstall": true,
+      "callable": true,
+      "timeoutSec": 30,
+      "minIntervalSec": 10,
+      "args": { "type": "object", "properties": {}, "additionalProperties": false }
+    }
+  },
+  "datasets": {
+    "current": { "description": "最新指标 {value, unit, label}" }
+  },
+  "series": {
+    "history": { "description": "指标历史", "retention": { "maxAgeDays": 1, "maxPoints": 500 } }
+  }
+}

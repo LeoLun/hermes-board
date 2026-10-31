@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>示例指标</title>
+<style>
+  .content { display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; }
+  .content[hidden] { display: none; }
+  .reading { display: flex; align-items: baseline; gap: 6px; }
+  .value { color: var(--hb-ink); }
+  .unit, .label { color: var(--hb-ink-muted); }
+  .trend { flex: 1; min-height: 24px; }
+  html[data-h="4"][data-w="4"] .label { display: none; }
+</style>
+</head>
+<body>
+<main class="hb-card">
+  <header class="hb-header">
+    <h2 class="hb-title">示例指标</h2>
+    <button class="hb-btn hb-btn--utility" id="refresh" type="button" aria-label="刷新">刷新</button>
+  </header>
+  <section class="content" id="content" hidden>
+    <div class="reading">
+      <span class="hb-metric value" id="value">—</span>
+      <span class="hb-fine unit" id="unit"></span>
+    </div>
+    <div class="hb-fine label" id="label"></div>
+    <div class="trend" id="trend"></div>
+    <div class="hb-updated" id="updated"></div>
+  </section>
+  <div class="hb-state" id="state"></div>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var stateEl = $('state');
+  var contentEl = $('content');
+  var refreshBtn = $('refresh');
+
+  function show(kind, text) {
+    contentEl.hidden = kind !== 'ready';
+    HermesCard.ui.state(stateEl, kind, text);
+  }
+
+  function load() {
+    return Promise.all([
+      HermesCard.data.get('current'),
+      HermesCard.series.query('history', { limit: 60, order: 'desc' })
+    ]).then(function (res) {
+      var snap = res[0];
+      var points = res[1].slice().reverse();
+      if (!snap.value) {
+        show('empty', '暂无数据，点击刷新');
+        return;
+      }
+      $('value').textContent = HermesCard.fmt.number(snap.value.value, 2);
+      $('unit').textContent = snap.value.unit || '';
+      $('label').textContent = snap.value.label || '';
+      HermesCard.chart.sparkline($('trend'), points.map(function (p) { return p.value; }));
+      HermesCard.ui.updated($('updated'), snap.updatedAt);
+      show('ready');
+    }).catch(function (err) {
+      show('error', err.message);
+    });
+  }
+
+  refreshBtn.addEventListener('click', function () {
+    refreshBtn.disabled = true;
+    HermesCard.run('fetch', {}, { wait: true }).then(function (run) {
+      if (run.status !== 'succeeded') {
+        HermesCard.ui.notify(run.error || '刷新失败', 'error');
+      }
+      return load();
+    }).catch(function (err) {
+      HermesCard.ui.notify(err.message, 'error');
+    }).then(function () {
+      refreshBtn.disabled = false;
+    });
+  });
+
+  HermesCard.ready().then(function () {
+    show('loading');
+    load();
+    HermesCard.subscribe(['data:current', 'series:history'], load);
+    HermesCard.on('resize', load);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "pluginId": "hermes-board",
+  "pluginVersion": "0.1.0",
+  "apiVersion": 1,
+  "protocol": 1,
+  "layoutSchema": "hermes-board/layout@1",
+  "cardSchema": "hermes-board/card@1",
+  "grid": { "columns": 24, "gap": 12, "padding": 16, "minCell": 24, "maxCell": 72, "radius": 18 },
+  "presets": ["4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x6", "12x8"],
+  "limits": {
+    "maxItems": 64,
+    "htmlBytes": 262144,
+    "scriptBytes": 262144,
+    "datasetBytes": 262144,
+    "seriesPointBytes": 4096,
+    "stateValueBytes": 65536,
+    "stateCardBytes": 1048576,
+    "seriesQueryLimit": 5000,
+    "seriesDefaultMaxAgeDays": 30,
+    "seriesDefaultMaxPoints": 20000,
+    "runsPerCard": 100,
+    "changesRetentionMs": 86400000,
+    "aiInputBytes": 32768,
+    "aiMaxTokens": 2000,
+    "actionTimeoutDefault": 60,
+    "actionTimeoutMax": 600,
+    "maxConcurrentRuns": 4,
+    "outputCaptureBytes": 65536,
+    "outputTailBytes": 4096
+  },
+  "bridge": {
+    "requestsPerSecond": 20,
+    "aiPerMinute": 6,
+    "aiConcurrent": 1,
+    "notifyIntervalMs": 3000,
+    "readyTimeoutMs": 10000,
+    "maxParamBytes": 300000
+  },
+  "poll": { "visibleMs": 5000, "hiddenMs": 30000 }
+}

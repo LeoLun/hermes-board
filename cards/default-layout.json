@@ -1,0 +1,68 @@
+{
+  "items": [
+    {
+      "id": "weather",
+      "card": "weather",
+      "x": 0,
+      "y": 0,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "id": "clock",
+      "card": "clock",
+      "x": 8,
+      "y": 0,
+      "w": 8,
+      "h": 4
+    },
+    {
+      "id": "world-clock",
+      "card": "world-clock",
+      "x": 8,
+      "y": 4,
+      "w": 4,
+      "h": 4
+    },
+    {
+      "id": "countdown",
+      "card": "countdown",
+      "x": 12,
+      "y": 4,
+      "w": 4,
+      "h": 4
+    },
+    {
+      "id": "calendar",
+      "card": "calendar",
+      "x": 16,
+      "y": 0,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "id": "pomodoro",
+      "card": "pomodoro",
+      "x": 0,
+      "y": 8,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "id": "note",
+      "card": "note",
+      "x": 8,
+      "y": 8,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "id": "todo",
+      "card": "todo",
+      "x": 16,
+      "y": 8,
+      "w": 8,
+      "h": 8
+    }
+  ]
+}

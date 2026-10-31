@@ -1,0 +1,13 @@
+name: hermes-board
+version: 0.1.0
+manifest_version: 2
+description: 可自定义的卡片看板：远程卡片包、SQLite 数据、原生 cron 刷新，以及 Hermes Desktop 看板页面。
+author: liujinglun
+license: MIT
+requires_hermes: ">=0.22.2"
+tags:
+  - dashboard
+  - board
+  - desktop
+provides_tools:
+  - board_manage
