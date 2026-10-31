@@ -5,7 +5,7 @@
 ## 0. 审批与前置
 
 - [x] 0.1 用户审阅并定稿 proposal、design 和 7 份能力规格。
-- [ ] 0.2 用 workflow-plan 生成 `docs/ai-workflows/plans/2026-10-31-add-hermes-board-plugin.md`。
+- [x] 0.2 用 workflow-plan 生成 `docs/ai-workflows/plans/2026-10-31-add-hermes-board-plugin.md`。
 - [x] 0.3 建立基线：`.gitignore`、`.agents/skills/`、OpenSpec 文档和 `openspec` 软链接已作为初始提交（2026-10-31）。隔离工作树仍由 workflow-worktree 在实施前创建。
 - [ ] 0.4 记录开发环境：本机 Hermes 0.22.2、Hermes venv Python 3.12、Node ≥ 20；准备一台远程 Linux 验证主机，或用本机 `hermes serve` 先替代，最终验收必须在 Linux 上做。
 
