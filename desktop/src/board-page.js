@@ -5,6 +5,7 @@ import { Button, Codicon, host, useTheme } from '@hermes/plugin-sdk';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { CardFrame } from './card-frame.js';
 import { AboutDialog, RunsDialog } from './dialogs.js';
+import { FullscreenCardDialog } from './fullscreen-card.js';
 import { boardSize, cellSize, itemRect } from './grid-math.js';
 import { useGestures } from './gestures.js';
 import { h } from './h.js';
@@ -63,7 +64,7 @@ function PhaseView({ st, services }) {
   }
 }
 
-function BoardView({ st, theme, scope, services, onMenu }) {
+function BoardView({ st, theme, scope, services, onMenu, onFullscreen, arranging }) {
   const scrollRef = useRef(null);
   const [width, setWidth] = useState(0);
   useLayoutEffect(() => {
@@ -101,6 +102,7 @@ function BoardView({ st, theme, scope, services, onMenu }) {
       className: 'hb-board',
       style: { width: size.width, height: size.height },
       'data-gesture': pointer ? '' : undefined,
+      'data-arranging': arranging ? '' : undefined,
     },
     pointer && gesture.mode === 'move' && target ? h('div', { className: 'hb-placeholder', style: target }) : null,
     ...items.map((item) => {
@@ -115,7 +117,7 @@ function BoardView({ st, theme, scope, services, onMenu }) {
         mode: active ? gesture.mode : null,
         handle: active ? gesture.handle : null,
         onStart: g.start, handlers: g.handlers, onKeyDown: g.onKeyDown, onBlur: g.onBlur,
-        onMenu, onRemove,
+        onMenu, onRemove, onFullscreen,
       });
     }),
     pointer ? h('div', { className: 'hb-shield', style: { cursor } }) : null,
@@ -139,14 +141,20 @@ export function createBoardPage(services) {
     return h('div', { className: 'hb-toolbar' }, h('strong', null, '看板'), controls);
   }
 
-  function ArrangeButton({ disabled }) {
+  function ArrangeButton({ disabled, onBusy }) {
     const [busy, setBusy] = useState(false);
     const run = async () => {
       setBusy(true);
+      onBusy(true);
       try {
+        await new Promise((resolve) => {
+          if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
+          else setTimeout(resolve, 0);
+        });
         await services.arrangeWithUndo();
       } finally {
         setBusy(false);
+        onBusy(false);
       }
     };
     return h('button', {
@@ -167,6 +175,8 @@ export function createBoardPage(services) {
     const rootRef = useRef(null);
     const [menu, setMenu] = useState(null);
     const [dialog, setDialog] = useState(null);
+    const [fullscreenCardId, setFullscreenCardId] = useState(null);
+    const [arranging, setArranging] = useState(false);
 
     useEffect(() => services.attachPage(), []);
     useEffect(() => {
@@ -194,10 +204,15 @@ export function createBoardPage(services) {
     return h('div', { className: 'hb-page', ref: rootRef, 'data-theme': theme },
       h('style', null, BOARD_CSS),
       h(Header, { st }),
-      ready ? h(BoardView, { st, theme, scope, services, onMenu }) : h('div', { className: 'hb-scroll' }, h(PhaseView, { st, services })),
-      ready ? h(ArrangeButton, { disabled: !st.layout.items.length }) : null,
+      ready ? h(BoardView, {
+        st, theme, scope, services, onMenu, arranging, onFullscreen: setFullscreenCardId,
+      }) : h('div', { className: 'hb-scroll' }, h(PhaseView, { st, services })),
+      ready ? h(ArrangeButton, { disabled: !st.layout.items.length, onBusy: setArranging }) : null,
       menu ? h(CardMenu, { menu, card: cardOf(menu.cardId), onClose: () => setMenu(null), onAction }) : null,
       dialog && dialog.type === 'runs' ? h(RunsDialog, { card: cardOf(dialog.cardId), services, onClose: () => setDialog(null) }) : null,
-      dialog && dialog.type === 'about' ? h(AboutDialog, { card: cardOf(dialog.cardId), onClose: () => setDialog(null) }) : null);
+      dialog && dialog.type === 'about' ? h(AboutDialog, { card: cardOf(dialog.cardId), onClose: () => setDialog(null) }) : null,
+      fullscreenCardId && cardOf(fullscreenCardId) ? h(FullscreenCardDialog, {
+        card: cardOf(fullscreenCardId), theme, scope, services, onClose: () => setFullscreenCardId(null),
+      }) : null);
   };
 }

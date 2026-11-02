@@ -1,6 +1,6 @@
 // One card on the board: SandboxedFrame + host overlay (grip, corner handles, state layers).
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Button, SandboxedFrame } from '@hermes/plugin-sdk';
+import { Button, Codicon, SandboxedFrame } from '@hermes/plugin-sdk';
 import { createCardHost } from './card-host.js';
 import { cardProblem } from './format.js';
 import { pixelSize } from './grid-math.js';
@@ -23,9 +23,11 @@ function CardFrameImpl(props) {
   const [docTick, setDocTick] = useState(0);
   const title = (card && card.title) || item.card;
 
+  const initialSize = props.envSize || sizeEnv(item);
+  const initialPixel = props.pixel || pixelSize(item.w, item.h, cell);
   const [host] = useState(() => createCardHost({
     card: { id: item.card, title, version: (card && card.version) || '0.0.0' },
-    env: { size: sizeEnv(item), pixel: pixelSize(item.w, item.h, cell), theme, visible: true },
+    env: { size: initialSize, pixel: initialPixel, theme, visible: true },
     runtimeJs: services.runtimeJs,
     tokensCss: services.tokensCss,
     api: services.api,
@@ -80,11 +82,12 @@ function CardFrameImpl(props) {
     host.setEnv({ theme });
   }, [host, theme]);
 
-  const px = pixelSize(item.w, item.h, cell);
+  const envSize = props.envSize || sizeEnv(item);
+  const px = props.pixel || pixelSize(item.w, item.h, cell);
   useEffect(() => {
-    host.setEnv({ size: sizeEnv(item), pixel: px });
+    host.setEnv({ size: envSize, pixel: px });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [host, item.w, item.h, px.width, px.height]);
+  }, [host, envSize.w, envSize.h, envSize.label, px.width, px.height]);
 
   useEffect(() => {
     const el = wrapperRef.current;
@@ -105,12 +108,16 @@ function CardFrameImpl(props) {
     };
   }, [host]);
 
-  useEffect(() => services.registerFrame(item.card, { element: wrapperRef.current, reload }), [services, item.card, reload]);
+  useEffect(() => {
+    if (props.registerFrame === false) return undefined;
+    return services.registerFrame(item.card, { element: wrapperRef.current, reload });
+  }, [services, item.card, reload, props.registerFrame]);
 
   const frameRef = useCallback((el) => host.setFrameWindow(el ? el.contentWindow : null), [host]);
   const onLoad = useCallback(() => host.handleLoad(), [host]);
 
-  const resizable = !!card && allowedSizes(card.sizes).length > 1;
+  const editable = !props.presentation;
+  const resizable = editable && !!card && allowedSizes(card.sizes).length > 1;
   const st = snap ? snap.status : 'idle';
   const failed = st === 'timeout' || st === 'error';
 
@@ -123,10 +130,10 @@ function CardFrameImpl(props) {
     'data-active': mode ? '' : undefined,
     'data-mode': mode || undefined,
     'data-handle': handle || undefined,
-    onContextMenu: (e) => {
+    onContextMenu: editable ? (e) => {
       e.preventDefault();
       props.onMenu(item.card, e.clientX, e.clientY);
-    },
+    } : undefined,
   },
   snap && snap.src ? h(SandboxedFrame, { key: snap.key, src: snap.src, title, ref: frameRef, onLoad, style: FRAME_STYLE }) : null,
   !failed && st !== 'ready' ? h('div', { className: 'hb-card-loading', 'aria-hidden': 'true' }) : null,
@@ -135,11 +142,22 @@ function CardFrameImpl(props) {
     h('span', null, snap.error),
     h('div', { className: 'hb-actions' },
       status === 'ok' ? h(Button, { size: 'sm', variant: 'outline', onClick: reload }, '重试') : null,
-      h(Button, { size: 'sm', variant: 'ghost', onClick: () => props.onRemove(item.card) }, '从看板移除'))) : null,
+      editable ? h(Button, { size: 'sm', variant: 'ghost', onClick: () => props.onRemove(item.card) }, '从看板移除') : null)) : null,
   st === 'ready' && snap.scriptError ? h('div', { className: 'hb-card-badge', role: 'status' },
     h('span', { title: snap.scriptError }, `卡片出错：${snap.scriptError}`),
     h('button', { type: 'button', className: 'hb-linkbtn', onClick: reload }, '重新加载')) : null,
-  h('button', {
+  editable && card && card.status === 'ok' && props.onFullscreen ? h('button', {
+    type: 'button',
+    className: 'hb-expand',
+    'aria-label': `全屏查看「${title}」`,
+    title: '全屏查看',
+    onPointerDown: (e) => e.stopPropagation(),
+    onClick: (e) => {
+      e.stopPropagation();
+      props.onFullscreen(item.card);
+    },
+  }, h(Codicon, { name: 'screen-full', 'aria-hidden': true })) : null,
+  editable ? h('button', {
     type: 'button',
     className: 'hb-grip-zone',
     'aria-label': `移动「${title}」：方向键移动，Shift+方向键切换尺寸，Enter 确认，Esc 取消`,
@@ -147,7 +165,7 @@ function CardFrameImpl(props) {
     onKeyDown: (e) => props.onKeyDown(e, item),
     onBlur: () => props.onBlur(item),
     ...props.handlers,
-  }, h('span', { className: 'hb-grip' })),
+  }, h('span', { className: 'hb-grip' })) : null,
   resizable ? h('div', {
     className: 'hb-corner', 'data-handle': 'bl', 'aria-hidden': 'true',
     onPointerDown: (e) => props.onStart(e, item, 'resize', 'bl'), ...props.handlers,

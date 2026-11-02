@@ -9,12 +9,12 @@ var TOKENS_CSS = '/* hermes-board card tokens & components (Apple DESIGN.md base
 
 // desktop/src/board-page.js
 import * as sdk from "@hermes/plugin-sdk";
-import { Button as Button4, Codicon as Codicon2, host, useTheme } from "@hermes/plugin-sdk";
-import { useCallback as useCallback3, useEffect as useEffect4, useLayoutEffect, useMemo, useRef as useRef3, useState as useState5, useSyncExternalStore } from "react";
+import { Button as Button4, Codicon as Codicon3, host, useTheme } from "@hermes/plugin-sdk";
+import { useCallback as useCallback3, useEffect as useEffect4, useLayoutEffect as useLayoutEffect2, useMemo as useMemo2, useRef as useRef4, useState as useState6, useSyncExternalStore } from "react";
 
 // desktop/src/card-frame.js
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { Button, SandboxedFrame } from "@hermes/plugin-sdk";
+import { Button, Codicon, SandboxedFrame } from "@hermes/plugin-sdk";
 
 // shared/constants.json
 var constants_default = {
@@ -25,7 +25,7 @@ var constants_default = {
   layoutSchema: "hermes-board/layout@1",
   cardSchema: "hermes-board/card@1",
   grid: { columns: 24, gap: 12, padding: 16, minCell: 24, maxCell: 72, radius: 18 },
-  presets: ["4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x6", "12x8"],
+  presets: ["4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x4", "12x6", "12x8", "24x4"],
   limits: {
     maxItems: 64,
     htmlBytes: 262144,
@@ -905,9 +905,11 @@ function CardFrameImpl(props) {
   const [snap, setSnap] = useState(null);
   const [docTick, setDocTick] = useState(0);
   const title = card && card.title || item.card;
+  const initialSize = props.envSize || sizeEnv(item);
+  const initialPixel = props.pixel || pixelSize(item.w, item.h, cell);
   const [host3] = useState(() => createCardHost({
     card: { id: item.card, title, version: card && card.version || "0.0.0" },
-    env: { size: sizeEnv(item), pixel: pixelSize(item.w, item.h, cell), theme, visible: true },
+    env: { size: initialSize, pixel: initialPixel, theme, visible: true },
     runtimeJs: services.runtimeJs,
     tokensCss: services.tokensCss,
     api: services.api,
@@ -954,10 +956,11 @@ function CardFrameImpl(props) {
   useEffect(() => {
     host3.setEnv({ theme });
   }, [host3, theme]);
-  const px = pixelSize(item.w, item.h, cell);
+  const envSize = props.envSize || sizeEnv(item);
+  const px = props.pixel || pixelSize(item.w, item.h, cell);
   useEffect(() => {
-    host3.setEnv({ size: sizeEnv(item), pixel: px });
-  }, [host3, item.w, item.h, px.width, px.height]);
+    host3.setEnv({ size: envSize, pixel: px });
+  }, [host3, envSize.w, envSize.h, envSize.label, px.width, px.height]);
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return void 0;
@@ -974,10 +977,14 @@ function CardFrameImpl(props) {
       document.removeEventListener("visibilitychange", update);
     };
   }, [host3]);
-  useEffect(() => services.registerFrame(item.card, { element: wrapperRef.current, reload }), [services, item.card, reload]);
+  useEffect(() => {
+    if (props.registerFrame === false) return void 0;
+    return services.registerFrame(item.card, { element: wrapperRef.current, reload });
+  }, [services, item.card, reload, props.registerFrame]);
   const frameRef = useCallback((el) => host3.setFrameWindow(el ? el.contentWindow : null), [host3]);
   const onLoad = useCallback(() => host3.handleLoad(), [host3]);
-  const resizable = !!card && allowedSizes(card.sizes).length > 1;
+  const editable = !props.presentation;
+  const resizable = editable && !!card && allowedSizes(card.sizes).length > 1;
   const st = snap ? snap.status : "idle";
   const failed = st === "timeout" || st === "error";
   return h(
@@ -991,10 +998,10 @@ function CardFrameImpl(props) {
       "data-active": mode ? "" : void 0,
       "data-mode": mode || void 0,
       "data-handle": handle || void 0,
-      onContextMenu: (e) => {
+      onContextMenu: editable ? (e) => {
         e.preventDefault();
         props.onMenu(item.card, e.clientX, e.clientY);
-      }
+      } : void 0
     },
     snap && snap.src ? h(SandboxedFrame, { key: snap.key, src: snap.src, title, ref: frameRef, onLoad, style: FRAME_STYLE }) : null,
     !failed && st !== "ready" ? h("div", { className: "hb-card-loading", "aria-hidden": "true" }) : null,
@@ -1007,7 +1014,7 @@ function CardFrameImpl(props) {
         "div",
         { className: "hb-actions" },
         status === "ok" ? h(Button, { size: "sm", variant: "outline", onClick: reload }, "重试") : null,
-        h(Button, { size: "sm", variant: "ghost", onClick: () => props.onRemove(item.card) }, "从看板移除")
+        editable ? h(Button, { size: "sm", variant: "ghost", onClick: () => props.onRemove(item.card) }, "从看板移除") : null
       )
     ) : null,
     st === "ready" && snap.scriptError ? h(
@@ -1016,7 +1023,18 @@ function CardFrameImpl(props) {
       h("span", { title: snap.scriptError }, `卡片出错：${snap.scriptError}`),
       h("button", { type: "button", className: "hb-linkbtn", onClick: reload }, "重新加载")
     ) : null,
-    h("button", {
+    editable && card && card.status === "ok" && props.onFullscreen ? h("button", {
+      type: "button",
+      className: "hb-expand",
+      "aria-label": `全屏查看「${title}」`,
+      title: "全屏查看",
+      onPointerDown: (e) => e.stopPropagation(),
+      onClick: (e) => {
+        e.stopPropagation();
+        props.onFullscreen(item.card);
+      }
+    }, h(Codicon, { name: "screen-full", "aria-hidden": true })) : null,
+    editable ? h("button", {
       type: "button",
       className: "hb-grip-zone",
       "aria-label": `移动「${title}」：方向键移动，Shift+方向键切换尺寸，Enter 确认，Esc 取消`,
@@ -1024,7 +1042,7 @@ function CardFrameImpl(props) {
       onKeyDown: (e) => props.onKeyDown(e, item),
       onBlur: () => props.onBlur(item),
       ...props.handlers
-    }, h("span", { className: "hb-grip" })),
+    }, h("span", { className: "hb-grip" })) : null,
     resizable ? h("div", {
       className: "hb-corner",
       "data-handle": "bl",
@@ -1172,8 +1190,80 @@ scripts/hermes-board/${card.id}/（数据脚本）`],
   );
 }
 
+// desktop/src/fullscreen-card.js
+import { Dialog as Dialog2, DialogContent as DialogContent2, DialogDescription as DialogDescription2, DialogHeader as DialogHeader2, DialogTitle as DialogTitle2 } from "@hermes/plugin-sdk";
+import { useLayoutEffect, useMemo, useRef as useRef2, useState as useState3 } from "react";
+
+// desktop/src/fullscreen-env.js
+function fullscreenEnv(width, height2) {
+  const px = (value) => Math.max(1, Math.round(Number.isFinite(Number(value)) ? Number(value) : 1));
+  return {
+    size: { w: 24, h: 16, label: "fullscreen" },
+    pixel: { width: px(width), height: px(height2) }
+  };
+}
+
+// desktop/src/fullscreen-card.js
+function FullscreenCardDialog({ card, theme, scope, services, onClose }) {
+  const stageRef = useRef2(null);
+  const [pixel, setPixel] = useState3({ width: 1, height: 1 });
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return void 0;
+    const measure = () => {
+      const next = fullscreenEnv(el.clientWidth, el.clientHeight).pixel;
+      setPixel((current) => current.width === next.width && current.height === next.height ? current : next);
+    };
+    measure();
+    if (typeof ResizeObserver !== "function") return void 0;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const env = fullscreenEnv(pixel.width, pixel.height);
+  const item = useMemo(() => ({ id: card.id, card: card.id, x: 0, y: 0, w: 24, h: 16 }), [card.id]);
+  const title = card.title || card.id;
+  return h(
+    Dialog2,
+    { open: true, onOpenChange: (open) => {
+      if (!open) onClose();
+    } },
+    h(
+      DialogContent2,
+      { className: "hb-fullscreen-dialog" },
+      h(
+        DialogHeader2,
+        { className: "hb-fullscreen-header" },
+        h(DialogTitle2, null, title),
+        h(DialogDescription2, null, "全屏查看卡片；关闭后看板布局保持不变。")
+      ),
+      h(
+        "div",
+        { className: "hb-fullscreen-stage", ref: stageRef },
+        h(CardFrame, {
+          key: `fullscreen:${card.id}:${card.revision || 0}`,
+          item,
+          card,
+          cell: 1,
+          theme,
+          scope,
+          services,
+          left: 0,
+          top: 0,
+          width: "100%",
+          height: "100%",
+          envSize: env.size,
+          pixel: env.pixel,
+          presentation: true,
+          registerFrame: false
+        })
+      )
+    )
+  );
+}
+
 // desktop/src/gestures.js
-import { useCallback as useCallback2, useEffect as useEffect3, useRef as useRef2, useState as useState3 } from "react";
+import { useCallback as useCallback2, useEffect as useEffect3, useRef as useRef3, useState as useState4 } from "react";
 
 // desktop/src/gesture-math.js
 var DRAG_THRESHOLD = 3;
@@ -1227,9 +1317,9 @@ function finishGesture(g) {
 // desktop/src/gestures.js
 var ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 function useGestures({ items, cards, cell, onCommit }) {
-  const [gesture, setGesture] = useState3(null);
-  const ref = useRef2(null);
-  const live = useRef2({ items, cards, cell, onCommit });
+  const [gesture, setGesture] = useState4(null);
+  const ref = useRef3(null);
+  const live = useRef3({ items, cards, cell, onCommit });
   live.current = { items, cards, cell, onCommit };
   const update = useCallback2((next) => {
     ref.current = next;
@@ -1398,10 +1488,10 @@ function createApi(rest, { timeoutMs = 15e3, aiTimeoutMs = 13e4 } = {}) {
 }
 
 // desktop/src/menus.js
-import { useState as useState4 } from "react";
+import { useState as useState5 } from "react";
 import {
   Button as Button3,
-  Codicon,
+  Codicon as Codicon2,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -1411,7 +1501,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@hermes/plugin-sdk";
-var icon = (name2) => h(Codicon, { name: name2, "aria-hidden": true });
+var icon = (name2) => h(Codicon2, { name: name2, "aria-hidden": true });
 function CardMenu({ menu, card, onClose, onAction }) {
   if (!menu) return null;
   const scripts = card && card.status === "ok" && card.scripts || [];
@@ -1446,7 +1536,7 @@ function CardMenu({ menu, card, onClose, onAction }) {
   );
 }
 function AddCardButton({ cards, onAdd, disabled }) {
-  const [open, setOpen] = useState4(false);
+  const [open, setOpen] = useState5(false);
   const available = cards.filter((c) => !c.onBoard);
   const body = available.length ? h("div", { className: "hb-picker", role: "list" }, available.map((c) => h(
     "button",
@@ -1484,7 +1574,7 @@ var surface = "var(--ui-bg-card, var(--ui-bg-elevated, #fff))";
 var BOARD_CSS = `
 .hb-page { position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column;
   color: var(--ui-text-primary); background: var(--ui-bg-editor, transparent); }
-.hb-scroll { position: relative; flex: 1; min-height: 0; overflow: auto; }
+.hb-scroll { position: relative; flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
 .hb-board { position: relative; margin: 0 auto; }
 .hb-card { position: absolute; box-sizing: border-box; border-radius: ${RADIUS}px; overflow: hidden; background: ${surface};
   box-shadow: 0 0 0 1px var(--ui-stroke-tertiary, rgba(0,0,0,.08));
@@ -1492,6 +1582,7 @@ var BOARD_CSS = `
 .hb-card[data-active] { transition: box-shadow .15s ease; z-index: 6;
   box-shadow: 0 14px 36px rgba(0,0,0,.18), 0 0 0 1px var(--ui-stroke-secondary, rgba(0,0,0,.16)); }
 .hb-card[data-active][data-mode=resize] { transition: left .12s ease, top .12s ease, width .12s ease, height .12s ease, box-shadow .15s ease; }
+.hb-board[data-arranging] .hb-card { transition: none; }
 .hb-card > iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: transparent; }
 .hb-board[data-gesture] iframe { pointer-events: none; }
 .hb-grip-zone { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 76px; height: 18px; z-index: 4;
@@ -1510,6 +1601,17 @@ var BOARD_CSS = `
 .hb-corner path { fill: none; stroke: var(--ui-accent, #0071e3); stroke-width: 3; stroke-linecap: round; }
 .hb-corner:hover svg, .hb-card[data-handle=bl] .hb-corner[data-handle=bl] svg,
 .hb-card[data-handle=br] .hb-corner[data-handle=br] svg { opacity: 1; }
+.hb-expand { position: absolute; top: 10px; right: 10px; z-index: 5; width: 30px; height: 30px; margin: 0; padding: 0;
+  display: grid; place-items: center; border: 1px solid var(--ui-stroke-tertiary, rgba(0,0,0,.08)); border-radius: 9px;
+  background: color-mix(in srgb, var(--ui-bg-elevated, #fff) 88%, transparent); color: var(--ui-text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1); cursor: pointer; opacity: 1; transition: background .12s ease; }
+.hb-expand:hover { background: var(--ui-control-hover-background, var(--ui-bg-secondary)); }
+.hb-expand:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+.hb-fullscreen-dialog { width: calc(100vw - 64px); max-width: none; height: calc(100vh - 64px); max-height: none;
+  display: flex; flex-direction: column; gap: 12px; padding: 20px; box-sizing: border-box; }
+.hb-fullscreen-header { flex: none; padding-right: 36px; }
+.hb-fullscreen-stage { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: ${RADIUS}px; }
+.hb-fullscreen-stage .hb-card { border-radius: ${RADIUS}px; }
 .hb-shield { position: absolute; inset: 0; z-index: 20; }
 .hb-placeholder { position: absolute; box-sizing: border-box; border-radius: ${RADIUS}px; z-index: 1; pointer-events: none;
   border: 2px dashed var(--ui-stroke-secondary, rgba(0,0,0,.2)); background: var(--ui-selection-background, rgba(0,113,227,.08));
@@ -1583,7 +1685,7 @@ var BOARD_CSS = `
 
 // desktop/src/board-page.js
 var DRAG_EXTRA_ROWS = 8;
-var icon2 = (name2) => h(Codicon2, { name: name2, "aria-hidden": true });
+var icon2 = (name2) => h(Codicon3, { name: name2, "aria-hidden": true });
 var noopUnsubscribe = () => {
 };
 function useAtomFallback(atom) {
@@ -1641,10 +1743,10 @@ function PhaseView({ st, services }) {
       return h(Center, null, "正在加载看板…");
   }
 }
-function BoardView({ st, theme, scope, services, onMenu }) {
-  const scrollRef = useRef3(null);
-  const [width, setWidth] = useState5(0);
-  useLayoutEffect(() => {
+function BoardView({ st, theme, scope, services, onMenu, onFullscreen, arranging }) {
+  const scrollRef = useRef4(null);
+  const [width, setWidth] = useState6(0);
+  useLayoutEffect2(() => {
     const el = scrollRef.current;
     if (!el) return void 0;
     const measure = () => setWidth(el.clientWidth);
@@ -1655,7 +1757,7 @@ function BoardView({ st, theme, scope, services, onMenu }) {
     return () => ro.disconnect();
   }, []);
   const cell = cellSize(width || 1200);
-  const cards = useMemo(() => new Map((st.cards || []).map((c) => [c.id, c])), [st.cards]);
+  const cards = useMemo2(() => new Map((st.cards || []).map((c) => [c.id, c])), [st.cards]);
   const onCommit = useCallback3((op, items2) => services.store.commit(op, items2), [services]);
   const g = useGestures({ items: st.layout.items, cards, cell, onCommit });
   const items = g.items;
@@ -1681,7 +1783,8 @@ function BoardView({ st, theme, scope, services, onMenu }) {
       {
         className: "hb-board",
         style: { width: size.width, height: size.height },
-        "data-gesture": pointer ? "" : void 0
+        "data-gesture": pointer ? "" : void 0,
+        "data-arranging": arranging ? "" : void 0
       },
       pointer && gesture.mode === "move" && target ? h("div", { className: "hb-placeholder", style: target }) : null,
       ...items.map((item) => {
@@ -1708,7 +1811,8 @@ function BoardView({ st, theme, scope, services, onMenu }) {
           onKeyDown: g.onKeyDown,
           onBlur: g.onBlur,
           onMenu,
-          onRemove
+          onRemove,
+          onFullscreen
         });
       }),
       pointer ? h("div", { className: "hb-shield", style: { cursor } }) : null,
@@ -1733,14 +1837,20 @@ function createBoardPage(services) {
     if (HeaderControl) return h(HeaderControl, { id: "hermes-board.header" }, controls);
     return h("div", { className: "hb-toolbar" }, h("strong", null, "看板"), controls);
   }
-  function ArrangeButton({ disabled }) {
-    const [busy, setBusy] = useState5(false);
+  function ArrangeButton({ disabled, onBusy }) {
+    const [busy, setBusy] = useState6(false);
     const run = async () => {
       setBusy(true);
+      onBusy(true);
       try {
+        await new Promise((resolve) => {
+          if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => resolve());
+          else setTimeout(resolve, 0);
+        });
         await services.arrangeWithUndo();
       } finally {
         setBusy(false);
+        onBusy(false);
       }
     };
     return h("button", {
@@ -1757,9 +1867,11 @@ function createBoardPage(services) {
     const connectionId = useAtomValue(hostState.connectionId);
     const profile = useAtomValue(hostState.profile);
     const scope = `${connectionId == null ? "" : connectionId}|${profile == null ? "" : typeof profile === "string" ? profile : JSON.stringify(profile)}`;
-    const rootRef = useRef3(null);
-    const [menu, setMenu] = useState5(null);
-    const [dialog, setDialog] = useState5(null);
+    const rootRef = useRef4(null);
+    const [menu, setMenu] = useState6(null);
+    const [dialog, setDialog] = useState6(null);
+    const [fullscreenCardId, setFullscreenCardId] = useState6(null);
+    const [arranging, setArranging] = useState6(false);
     useEffect4(() => services.attachPage(), []);
     useEffect4(() => {
       services.setScope(scope);
@@ -1784,11 +1896,26 @@ function createBoardPage(services) {
       { className: "hb-page", ref: rootRef, "data-theme": theme },
       h("style", null, BOARD_CSS),
       h(Header, { st }),
-      ready ? h(BoardView, { st, theme, scope, services, onMenu }) : h("div", { className: "hb-scroll" }, h(PhaseView, { st, services })),
-      ready ? h(ArrangeButton, { disabled: !st.layout.items.length }) : null,
+      ready ? h(BoardView, {
+        st,
+        theme,
+        scope,
+        services,
+        onMenu,
+        arranging,
+        onFullscreen: setFullscreenCardId
+      }) : h("div", { className: "hb-scroll" }, h(PhaseView, { st, services })),
+      ready ? h(ArrangeButton, { disabled: !st.layout.items.length, onBusy: setArranging }) : null,
       menu ? h(CardMenu, { menu, card: cardOf(menu.cardId), onClose: () => setMenu(null), onAction }) : null,
       dialog && dialog.type === "runs" ? h(RunsDialog, { card: cardOf(dialog.cardId), services, onClose: () => setDialog(null) }) : null,
-      dialog && dialog.type === "about" ? h(AboutDialog, { card: cardOf(dialog.cardId), onClose: () => setDialog(null) }) : null
+      dialog && dialog.type === "about" ? h(AboutDialog, { card: cardOf(dialog.cardId), onClose: () => setDialog(null) }) : null,
+      fullscreenCardId && cardOf(fullscreenCardId) ? h(FullscreenCardDialog, {
+        card: cardOf(fullscreenCardId),
+        theme,
+        scope,
+        services,
+        onClose: () => setFullscreenCardId(null)
+      }) : null
     );
   };
 }
@@ -2151,7 +2278,7 @@ function createChangeHub() {
 }
 
 // desktop/src/reminders.js
-function createReminders({ setTimeout, fire, now = () => Date.now() }) {
+function createReminders({ setTimeout: setTimeout2, fire, now = () => Date.now() }) {
   const timers = /* @__PURE__ */ new Map();
   const keyOf = (cardId, id) => `${cardId}\0${id}`;
   function cancel(cardId, id) {
@@ -2170,7 +2297,7 @@ function createReminders({ setTimeout, fire, now = () => Date.now() }) {
       cancel(cardId, id);
       const key2 = keyOf(cardId, id);
       const delay = Math.max(0, at - now());
-      const cancelTimer = setTimeout(() => {
+      const cancelTimer = setTimeout2(() => {
         timers.delete(key2);
         fire({ cardId, id, title, message });
       }, delay);
@@ -2208,7 +2335,7 @@ function createEmitter() {
 }
 function createServices({
   rest,
-  setTimeout,
+  setTimeout: setTimeout2,
   onEvent,
   notify,
   os = {},
@@ -2247,7 +2374,7 @@ function createServices({
         store.setConnected(false);
       }
     },
-    setTimer: (fn, ms) => setTimeout(fn, ms),
+    setTimer: (fn, ms) => setTimeout2(fn, ms),
     clearTimer: (cancel) => {
       if (typeof cancel === "function") cancel();
     }
@@ -2260,7 +2387,7 @@ function createServices({
     }
   }
   const reminders = createReminders({
-    setTimeout: (fn, ms) => setTimeout(fn, ms),
+    setTimeout: (fn, ms) => setTimeout2(fn, ms),
     fire: ({ cardId, title, message }) => {
       const body = message || titleOf(cardId);
       toast("info", body, { title, durationMs: 15e3 });

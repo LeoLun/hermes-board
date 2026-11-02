@@ -7,7 +7,7 @@ const surface = 'var(--ui-bg-card, var(--ui-bg-elevated, #fff))';
 export const BOARD_CSS = `
 .hb-page { position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column;
   color: var(--ui-text-primary); background: var(--ui-bg-editor, transparent); }
-.hb-scroll { position: relative; flex: 1; min-height: 0; overflow: auto; }
+.hb-scroll { position: relative; flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
 .hb-board { position: relative; margin: 0 auto; }
 .hb-card { position: absolute; box-sizing: border-box; border-radius: ${RADIUS}px; overflow: hidden; background: ${surface};
   box-shadow: 0 0 0 1px var(--ui-stroke-tertiary, rgba(0,0,0,.08));
@@ -15,6 +15,7 @@ export const BOARD_CSS = `
 .hb-card[data-active] { transition: box-shadow .15s ease; z-index: 6;
   box-shadow: 0 14px 36px rgba(0,0,0,.18), 0 0 0 1px var(--ui-stroke-secondary, rgba(0,0,0,.16)); }
 .hb-card[data-active][data-mode=resize] { transition: left .12s ease, top .12s ease, width .12s ease, height .12s ease, box-shadow .15s ease; }
+.hb-board[data-arranging] .hb-card { transition: none; }
 .hb-card > iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: transparent; }
 .hb-board[data-gesture] iframe { pointer-events: none; }
 .hb-grip-zone { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 76px; height: 18px; z-index: 4;
@@ -33,6 +34,17 @@ export const BOARD_CSS = `
 .hb-corner path { fill: none; stroke: var(--ui-accent, #0071e3); stroke-width: 3; stroke-linecap: round; }
 .hb-corner:hover svg, .hb-card[data-handle=bl] .hb-corner[data-handle=bl] svg,
 .hb-card[data-handle=br] .hb-corner[data-handle=br] svg { opacity: 1; }
+.hb-expand { position: absolute; top: 10px; right: 10px; z-index: 5; width: 30px; height: 30px; margin: 0; padding: 0;
+  display: grid; place-items: center; border: 1px solid var(--ui-stroke-tertiary, rgba(0,0,0,.08)); border-radius: 9px;
+  background: color-mix(in srgb, var(--ui-bg-elevated, #fff) 88%, transparent); color: var(--ui-text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1); cursor: pointer; opacity: 1; transition: background .12s ease; }
+.hb-expand:hover { background: var(--ui-control-hover-background, var(--ui-bg-secondary)); }
+.hb-expand:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+.hb-fullscreen-dialog { width: calc(100vw - 64px); max-width: none; height: calc(100vh - 64px); max-height: none;
+  display: flex; flex-direction: column; gap: 12px; padding: 20px; box-sizing: border-box; }
+.hb-fullscreen-header { flex: none; padding-right: 36px; }
+.hb-fullscreen-stage { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: ${RADIUS}px; }
+.hb-fullscreen-stage .hb-card { border-radius: ${RADIUS}px; }
 .hb-shield { position: absolute; inset: 0; z-index: 20; }
 .hb-placeholder { position: absolute; box-sizing: border-box; border-radius: ${RADIUS}px; z-index: 1; pointer-events: none;
   border: 2px dashed var(--ui-stroke-secondary, rgba(0,0,0,.2)); background: var(--ui-selection-background, rgba(0,113,227,.08));

@@ -19,8 +19,11 @@ class ConstantsTest(unittest.TestCase):
             self.assertEqual(shared[key], value, key)
 
     def test_presets_and_parse(self):
-        self.assertEqual(constants.PRESETS, ("4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x6", "12x8"))
+        self.assertEqual(constants.PRESETS, (
+            "4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x4", "12x6", "12x8", "24x4",
+        ))
         self.assertEqual(constants.parse_size("12x6"), (12, 6))
+        self.assertEqual(constants.parse_size("24x4"), (24, 4))
         for bad in ("6", "x4", "6x", "a x b", 64, None):
             with self.assertRaises(ValueError):
                 constants.parse_size(bad)  # type: ignore[arg-type]
