@@ -69,7 +69,19 @@ class CronHostTest(unittest.TestCase):
             env["HB_RESULT_FILE"] = str(result_file)
             code = CHILD.format(agent=str(Path(AGENT_ROOT).resolve()), root=str(ROOT), tests=str(TESTS),
                                 bundled=str(bundled))
-            proc = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=120)
+            # Newer Hermes releases launch their bundled Python in isolated mode and load
+            # hermes_bootstrap before importing agent modules.  A bare sys.executable child
+            # bypasses that bootstrap and cannot see vendored dependencies such as ruamel.
+            # Mirror the real launcher while still setting the temporary HERMES_HOME before
+            # any cron module is imported.
+            bootstrap = (
+                "import sys; "
+                f"sys.path.insert(0, {str(Path(AGENT_ROOT).resolve())!r}); "
+                "import hermes_bootstrap; "
+                f"exec(compile({code!r}, '<hermes-board-host-test>', 'exec'))"
+            )
+            proc = subprocess.run([sys.executable, "-I", "-c", bootstrap], env=env,
+                                  capture_output=True, text=True, timeout=120)
             self.assertEqual(proc.returncode, 0, proc.stderr[-3000:])
             self.assertTrue(result_file.is_file(), proc.stdout[-2000:] + proc.stderr[-3000:])
             out = json.loads(result_file.read_text(encoding="utf-8"))
