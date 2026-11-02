@@ -14,7 +14,7 @@ version: 1.0.0
 | 文件 | 内容 |
 |---|---|
 | `references/manifest.md` | `card.json` 的字段、命名规则、尺寸、调度格式、Schema 子集、校验规则 |
-| `references/design-standard.md` | 设计令牌、字号阶梯、间距圆角、组件类、尺寸适配，基于 Apple DESIGN.md |
+| `references/design-standard.md` | 设计令牌、字号阶梯、间距圆角、组件类、尺寸适配，基于 Claude DESIGN.md |
 | `references/runtime-api.md` | 卡片 HTML 中可用的 `window.HermesCard` 接口 |
 | `references/script-sdk.md` | 数据脚本 SDK（`hermes_board_sdk.Card`）、运行方式、凭据与权限 |
 | `templates/basic-card/card.json`、`templates/basic-card/index.html`、`templates/basic-card/scripts/fetch.py` | 可直接改写的起始模板，能通过严格校验 |
@@ -30,7 +30,7 @@ version: 1.0.0
    - 需要定时刷新的脚本写 `schedule`（如 `every 30m`），由 Hermes 原生 cron 运行；需要卡片按钮触发的脚本写 `callable: true`，并用 `args` 声明参数。
    - 需要 AI 判断时（例如从测速结果里选最优节点），在清单的 `ai` 中声明任务，卡片用 `HermesCard.ai.invoke` 调用，结果必须符合 `outputSchema`。
    - 卡片 id 用小写短横线命名，例如 `server-status`。
-3. **校验**：`board_manage {action:"validate", package}`。`valid` 为 false 时按 `errors` 逐条修正；`warnings` 是设计规范提示，应尽量全部消除（通常是写死了颜色、自定义了字体、用了阴影或渐变、字重不是 300/400/600、缺少加载/空/错误状态）。
+3. **校验**：`board_manage {action:"validate", package}`。`valid` 为 false 时按 `errors` 逐条修正；`warnings` 是设计规范提示，应尽量全部消除（通常是写死了颜色、自定义了字体、用了阴影或渐变、字重不是 300/400/500/600、缺少加载/空/错误状态）。
 4. **保存**：`board_manage {action:"save", package}`。新卡片会自动放到看板的首个空位；指定位置时传 `place: {x, y, size}`。更新已有卡片必须传 `replace: true`，卡片保留原位置。保存后会在后台运行声明了 `runOnInstall` 的脚本。
 5. **自测**：
    - `board_manage {action:"run", card, script, args}` 运行脚本，检查 `status`、`result`、`stdoutTail`、`stderrTail`、`error`。

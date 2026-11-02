@@ -1,41 +1,48 @@
-/* hermes-board card tokens & components (Apple DESIGN.md based). Injected as <style id="hb-tokens">. */
+/* hermes-board card tokens & components (Claude DESIGN.md based). Injected as <style id="hb-tokens">. */
 :root {
   color-scheme: light;
-  --hb-surface: #ffffff;
-  --hb-surface-2: #fafafc;
-  --hb-ink: #1d1d1f;
-  --hb-ink-2: #333333;
-  --hb-ink-muted: #7a7a7a;
-  --hb-hairline: rgba(0, 0, 0, 0.08);
-  --hb-divider: #f0f0f0;
-  --hb-accent: #0066cc;
+  --hb-surface: #faf9f5;
+  --hb-surface-2: #efe9de;
+  --hb-ink: #141413;
+  --hb-ink-2: #3d3d3a;
+  --hb-ink-muted: #6c6a64;
+  --hb-hairline: #e6dfd8;
+  --hb-divider: #ebe6df;
+  --hb-accent: #cc785c;
+  --hb-accent-active: #a9583e;
   --hb-on-accent: #ffffff;
-  --hb-focus: #0071e3;
-  --hb-positive: #34c759;
-  --hb-warning: #ff9500;
-  --hb-critical: #ff3b30;
-  --hb-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", system-ui, sans-serif;
+  --hb-focus: #cc785c;
+  --hb-positive: #5db872;
+  --hb-warning: #d4a017;
+  --hb-critical: #c64545;
+  --hb-font-display: "Tiempos Headline", "Cormorant Garamond", "EB Garamond", Georgia, "Songti SC", serif;
+  --hb-font-body: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  --hb-font-code: "JetBrains Mono", SFMono-Regular, Consolas, monospace;
+  --hb-font: var(--hb-font-body);
   --hb-pad: 16px;
-  --hb-radius-well: 11px;
-  --hb-radius-utility: 8px;
-  --hb-radius-pill: 980px;
-  --hb-motion: 200ms;
+  --hb-radius-card: 12px;
+  --hb-radius-control: 8px;
+  --hb-radius-well: var(--hb-radius-card);
+  --hb-radius-utility: var(--hb-radius-control);
+  --hb-radius-pill: 9999px;
+  --hb-motion: 160ms;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --hb-surface: #272729;
-  --hb-surface-2: #2a2a2c;
-  --hb-ink: #ffffff;
-  --hb-ink-2: #cccccc;
-  --hb-ink-muted: #7a7a7a;
-  --hb-hairline: rgba(255, 255, 255, 0.08);
-  --hb-divider: rgba(255, 255, 255, 0.08);
-  --hb-accent: #2997ff;
-  --hb-focus: #0071e3;
-  --hb-positive: #30d158;
-  --hb-warning: #ff9f0a;
-  --hb-critical: #ff453a;
+  --hb-surface: #181715;
+  --hb-surface-2: #252320;
+  --hb-ink: #faf9f5;
+  --hb-ink-2: #d8d2c8;
+  --hb-ink-muted: #a09d96;
+  --hb-hairline: #3a3732;
+  --hb-divider: #35322e;
+  --hb-accent: #cc785c;
+  --hb-accent-active: #e08b70;
+  --hb-focus: #e08b70;
+  --hb-positive: #6bc982;
+  --hb-warning: #e1b33d;
+  --hb-critical: #dc6262;
 }
 
 html[data-w="8"], html[data-w="12"] { --hb-pad: 24px; }
@@ -82,20 +89,20 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .hb-well {
   background: var(--hb-surface-2);
-  border-radius: var(--hb-radius-well);
+  border-radius: var(--hb-radius-card);
   padding: 12px;
 }
 
 /* ── type scale ─────────────────────────────────────────────────────── */
-.hb-metric-lg, .hb-metric, .hb-metric-sm { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--hb-ink); }
-.hb-metric-lg { font-size: 40px; line-height: 1.1; letter-spacing: -0.374px; }
-.hb-metric { font-size: 34px; line-height: 1.1; letter-spacing: -0.374px; }
-.hb-metric-sm { font-size: 21px; line-height: 1.19; letter-spacing: -0.2px; }
-.hb-title { font-size: 14px; font-weight: 600; line-height: 1.29; letter-spacing: -0.224px; color: var(--hb-ink); }
-.hb-body { font-size: 14px; font-weight: 400; line-height: 1.43; }
-.hb-body-lg { font-size: 17px; font-weight: 400; line-height: 1.47; letter-spacing: -0.374px; }
-.hb-fine { font-size: 12px; font-weight: 400; line-height: 1.33; }
-.hb-micro { font-size: 10px; font-weight: 400; line-height: 1.3; }
+.hb-metric-lg, .hb-metric, .hb-metric-sm { font-family: var(--hb-font-display); font-variant-numeric: tabular-nums; font-weight: 400; color: var(--hb-ink); }
+.hb-metric-lg { font-size: 40px; line-height: 1.05; letter-spacing: -0.8px; }
+.hb-metric { font-size: 34px; line-height: 1.1; letter-spacing: -0.6px; }
+.hb-metric-sm { font-size: 22px; line-height: 1.2; letter-spacing: -0.3px; }
+.hb-title { font-family: var(--hb-font-display); font-size: 16px; font-weight: 400; line-height: 1.3; letter-spacing: -0.2px; color: var(--hb-ink); }
+.hb-body { font-size: 14px; font-weight: 400; line-height: 1.55; }
+.hb-body-lg { font-size: 17px; font-weight: 400; line-height: 1.55; letter-spacing: 0; }
+.hb-fine { font-size: 12px; font-weight: 400; line-height: 1.4; }
+.hb-micro { font-size: 10px; font-weight: 500; line-height: 1.4; }
 .hb-muted { color: var(--hb-ink-muted); }
 .hb-fine, .hb-micro, .hb-body, .hb-body-lg { font-variant-numeric: tabular-nums; }
 
@@ -107,23 +114,24 @@ button, input, textarea, select { font: inherit; color: inherit; }
   justify-content: center;
   gap: 4px;
   border: 1px solid transparent;
-  border-radius: var(--hb-radius-pill);
+  border-radius: var(--hb-radius-control);
   background: var(--hb-accent);
   color: var(--hb-on-accent);
   padding: 6px 14px;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.29;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  transition: transform var(--hb-motion) ease, opacity var(--hb-motion) ease;
+  transition: background-color var(--hb-motion) ease, border-color var(--hb-motion) ease, opacity var(--hb-motion) ease;
 }
-.hb-btn:active:not(:disabled) { transform: scale(0.95); }
+.hb-btn:active:not(:disabled) { background: var(--hb-accent-active); }
 .hb-btn:disabled { opacity: 0.4; cursor: default; }
-.hb-btn--secondary { background: transparent; color: var(--hb-accent); border-color: var(--hb-accent); }
+.hb-btn--secondary { background: var(--hb-surface); color: var(--hb-ink); border-color: var(--hb-hairline); }
+.hb-btn--secondary:active:not(:disabled) { background: var(--hb-surface-2); }
 .hb-btn--utility {
-  border-radius: var(--hb-radius-utility);
+  border-radius: var(--hb-radius-control);
   background: var(--hb-surface-2);
   color: var(--hb-ink);
   border-color: var(--hb-hairline);
@@ -136,8 +144,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
   appearance: none;
   width: 100%;
   border: 1px solid var(--hb-hairline);
-  border-radius: var(--hb-radius-pill);
-  background: var(--hb-surface-2);
+  border-radius: var(--hb-radius-control);
+  background: var(--hb-surface);
   color: var(--hb-ink);
   padding: 6px 12px;
   font-size: 14px;
@@ -145,12 +153,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
   outline: none;
   transition: border-color var(--hb-motion) ease;
 }
-textarea.hb-input { border-radius: var(--hb-radius-well); resize: none; }
+textarea.hb-input { border-radius: var(--hb-radius-control); resize: none; }
 .hb-input::placeholder { color: var(--hb-ink-muted); }
 .hb-input:focus { border-color: var(--hb-focus); }
 
-:focus-visible { outline: 2px solid var(--hb-focus); outline-offset: 2px; }
-.hb-input:focus-visible { outline: none; }
+:focus-visible { outline: 2px solid var(--hb-focus); outline-offset: 2px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hb-focus) 15%, transparent); }
+.hb-input:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hb-focus) 15%, transparent); }
 
 .hb-chip {
   display: inline-flex;
@@ -164,8 +172,8 @@ textarea.hb-input { border-radius: var(--hb-radius-well); resize: none; }
   line-height: 1.33;
   white-space: nowrap;
 }
-button.hb-chip { border: 1px solid var(--hb-hairline); cursor: pointer; transition: transform var(--hb-motion) ease; }
-button.hb-chip:active { transform: scale(0.95); }
+button.hb-chip { border: 1px solid var(--hb-hairline); cursor: pointer; transition: background-color var(--hb-motion) ease; }
+button.hb-chip:active { background: var(--hb-divider); }
 .hb-chip[aria-pressed="true"], .hb-chip.is-active { background: var(--hb-accent); color: var(--hb-on-accent); border-color: transparent; }
 
 /* ── lists ──────────────────────────────────────────────────────────── */
@@ -225,8 +233,8 @@ html[data-h="6"] .hb-list, html[data-h="8"] .hb-list { overflow-y: auto; }
 
 /* ── charts ─────────────────────────────────────────────────────────── */
 .hb-chart { display: block; width: 100%; height: 100%; overflow: visible; }
-.hb-chart text { font-family: var(--hb-font); font-size: 10px; fill: var(--hb-ink-muted); font-variant-numeric: tabular-nums; }
-.hb-chart .hb-chart__center { font-size: 21px; font-weight: 600; fill: var(--hb-ink); }
+.hb-chart text { font-family: var(--hb-font-body); font-size: 10px; fill: var(--hb-ink-muted); font-variant-numeric: tabular-nums; }
+.hb-chart .hb-chart__center { font-family: var(--hb-font-display); font-size: 22px; font-weight: 400; fill: var(--hb-ink); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition: none !important; }

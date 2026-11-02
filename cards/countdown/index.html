@@ -7,7 +7,7 @@
   .view { display: flex; flex-direction: column; justify-content: center; gap: 4px; flex: 1; min-height: 0; }
   .label { color: var(--hb-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .count { display: flex; align-items: baseline; gap: 4px; }
-  .days { font-weight: 300; font-size: min(36vh, 30vw); line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; color: var(--hb-ink); }
+  .days { font-weight: 400; font-size: min(36vh, 30vw); line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; color: var(--hb-ink); }
   .unit { color: var(--hb-ink-muted); }
   .when { color: var(--hb-ink-muted); }
   .form { display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
@@ -29,7 +29,7 @@
       <div class="hb-body label" id="label"></div>
       <div class="hb-fine when" id="when"></div>
     </div>
-    <div class="count"><span class="days" id="days">—</span><span class="hb-body unit" id="unit">天</span></div>
+    <div class="count"><span class="hb-metric-lg days" id="days">—</span><span class="hb-body unit" id="unit">天</span></div>
   </section>
   <section class="form" id="form" hidden>
     <input class="hb-input" id="name" maxlength="20" placeholder="名称，例如 生日" autocomplete="off">

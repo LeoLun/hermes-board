@@ -57,7 +57,7 @@ DECL_RE = re.compile(r"([a-zA-Z-]+)\s*:\s*([^;{}]+)")
 VAR_RE = re.compile(r"var\([^()]*(?:\([^()]*\)[^()]*)*\)")
 COLOR_RE = re.compile(r"#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(", re.I)
 GRADIENT_RE = re.compile(r"\b(?:repeating-)?(?:linear|radial|conic)-gradient\(", re.I)
-ALLOWED_WEIGHTS = {"300", "400", "600", "normal", "inherit", "initial", "unset"}
+ALLOWED_WEIGHTS = {"300", "400", "500", "600", "normal", "inherit", "initial", "unset"}
 MAIN_CARD_RE = re.compile(r"""<main\b[^>]*\bclass\s*=\s*["'][^"']*\bhb-card\b""", re.I)
 LANG_RE = re.compile(r"""<html\b[^>]*\blang\s*=\s*["']zh-CN["']""", re.I)
 USES_DATA_RE = re.compile(r"HermesCard\s*\.\s*(?:data|series|run|scripts|ai|runs)\b")
@@ -362,7 +362,7 @@ def validate_html(html: Any, manifest: Any, report: Report) -> None:
     if gradients:
         report.warn("design.gradient", "index.html", "使用了渐变：卡片内部不用渐变")
     if weights:
-        report.warn("design.weight", "index.html", f"使用了字重 {sorted(weights)}：只用 300、400、600")
+        report.warn("design.weight", "index.html", f"使用了字重 {sorted(weights)}：只用 300、400、500、600")
     if not MAIN_CARD_RE.search(text):
         report.warn("design.root", "index.html", '缺少 <main class="hb-card"> 根元素')
     if not LANG_RE.search(text):

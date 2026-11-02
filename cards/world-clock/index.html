@@ -8,7 +8,7 @@
   .zone { min-width: 0; }
   .zone-name { display: flex; flex-direction: column; min-width: 0; }
   .zone-sub { color: var(--hb-ink-muted); white-space: nowrap; }
-  .zone-time { font-weight: 300; font-size: min(11vh, 26px); line-height: 1.1; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; }
+  .zone-time { font-weight: 400; font-size: min(11vh, 26px); line-height: 1.1; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; }
   .picker { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
   .picker-foot { display: flex; justify-content: space-between; align-items: center; }
@@ -86,7 +86,7 @@
       var info = describe(c.tz, now);
       var li = document.createElement('li');
       li.className = 'hb-row zone';
-      li.innerHTML = '<div class="zone-name"><span class="hb-body"></span><span class="hb-fine zone-sub"></span></div><span class="zone-time"></span>';
+      li.innerHTML = '<div class="zone-name"><span class="hb-body"></span><span class="hb-fine zone-sub"></span></div><span class="hb-metric-sm zone-time"></span>';
       li.querySelector('.hb-body').textContent = c.name;
       li.querySelector('.zone-sub').textContent = info.sub;
       li.querySelector('.zone-time').textContent = info.time;
