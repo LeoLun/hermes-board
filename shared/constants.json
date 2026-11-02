@@ -6,7 +6,7 @@
   "layoutSchema": "hermes-board/layout@1",
   "cardSchema": "hermes-board/card@1",
   "grid": { "columns": 24, "gap": 12, "padding": 16, "minCell": 24, "maxCell": 72, "radius": 18 },
-  "presets": ["4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x6", "12x8"],
+  "presets": ["4x4", "4x6", "6x4", "6x6", "8x4", "8x6", "8x8", "12x4", "12x6", "12x8", "24x4"],
   "limits": {
     "maxItems": 64,
     "htmlBytes": 262144,

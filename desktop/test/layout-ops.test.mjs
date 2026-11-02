@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cellSize, span, spanToCells, itemRect, pixelSize, boardSize, toCells, MIN_CELL, MAX_CELL, PADDING, GAP } from '../src/grid-math.js';
 import {
-  arrange, cycleSize, firstFit, hasOverlap, height, moveItem, nudge, pushDown, replay, sameLayout, snapResize, allowedSizes,
+  PRESETS, arrange, cycleSize, firstFit, hasOverlap, height, moveItem, nudge, pushDown, replay, sameLayout, snapResize, allowedSizes,
 } from '../src/layout-ops.js';
 
 const cases = JSON.parse(readFileSync(new URL('../../tests/fixtures/layout-cases.json', import.meta.url), 'utf8'));
@@ -33,6 +33,13 @@ test('widening the window keeps grid coordinates and scales pixels', () => {
   assert.equal(large.width, span(8, cellSize(1600)));
   assert.equal(large.left, PADDING + 8 * (cellSize(1600) + GAP));
   assert.deepEqual([item.x, item.y, item.w, item.h], [8, 0, 8, 4]);
+});
+
+test('banner presets include 12x4 and full-width 24x4', () => {
+  assert.ok(PRESETS.includes('12x4'));
+  assert.ok(PRESETS.includes('24x4'));
+  assert.deepEqual(allowedSizes(['24x4', '12x4']), [{ w: 12, h: 4 }, { w: 24, h: 4 }]);
+  assert.deepEqual(firstFit([], 24, 4), { x: 0, y: 0 });
 });
 
 test('firstFit — shared cases (same as Python)', () => {

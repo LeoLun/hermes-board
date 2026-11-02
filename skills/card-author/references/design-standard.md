@@ -90,7 +90,9 @@ html[data-size="4x4"] .secondary { display: none; }
 html[data-w="8"] .grid { grid-template-columns: repeat(3, 1fr); }
 ```
 
-- 每种声明尺寸都不能出现整体滚动条。
+卡片在宿主的全屏弹窗中显示时，运行时设置 `data-size="fullscreen"`、`data-w="24"`、`data-h="16"`。可用该选择器提供宽屏布局；全屏不会改变卡片在看板中的持久化尺寸。
+
+- 卡片在声明的**每一种尺寸**下都不能出现整体滚动条，内容要按尺寸取舍。
 - 列表只允许在高度不少于 6 格时内部滚动。
 - 不要假设一格的固定像素值。
 
