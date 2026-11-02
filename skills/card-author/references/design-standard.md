@@ -1,98 +1,117 @@
-# 卡片设计标准（基于 Apple DESIGN.md）
+# 卡片设计标准（基于 Claude DESIGN.md）
 
-运行时会在每张卡片的 `<head>` 最前面注入设计令牌和组件类，卡片只需引用它们。目标是所有卡片风格一致：干净的表面、克制的强调色、清晰的数字层级。
+运行时会在每张卡片的 `<head>` 最前面注入设计令牌和组件类。卡片优先组合它们，不要在单张卡片内复制一套品牌样式。
+
+风格核心是**暖色编辑感**：暖奶油画布、暖黑文字、珊瑚主操作，衬线展示字体与人文无衬线正文配对。层次依靠表面色和发丝线，不靠装饰性阴影或渐变。
 
 ## 令牌
 
-颜色一律通过 CSS 变量引用，不要写死 hex、rgb、hsl。主题切换（浅色/深色）由宿主完成，变量会自动变化。
+颜色一律通过 CSS 变量引用，不要写死 hex、rgb 或 hsl。主题切换由宿主完成。
 
 | 变量 | 浅色 | 深色 | 用途 |
 |---|---|---|---|
-| `--hb-surface` | `#ffffff` | `#272729` | 卡片表面 |
-| `--hb-surface-2` | `#fafafc` | `#2a2a2c` | 内部浅色块（Pearl） |
-| `--hb-ink` | `#1d1d1f` | `#ffffff` | 主文字、主要数字 |
-| `--hb-ink-2` | `#333333` | `#cccccc` | 次要文字 |
-| `--hb-ink-muted` | `#7a7a7a` | `#7a7a7a` | 说明、单位、时间 |
-| `--hb-hairline` | `rgba(0,0,0,.08)` | `rgba(255,255,255,.08)` | 发丝线、描边 |
-| `--hb-divider` | `#f0f0f0` | 随主题 | 列表分隔线 |
-| `--hb-accent` | `#0066cc` | `#2997ff` | 唯一强调色：链接、主按钮、图表主系列 |
-| `--hb-focus` | `#0071e3` | 随主题 | 焦点环 |
-| `--hb-positive` | `#34c759` | `#30d158` | 状态：正常 |
-| `--hb-warning` | `#ff9500` | `#ff9f0a` | 状态：注意 |
-| `--hb-critical` | `#ff3b30` | `#ff453a` | 状态：异常 |
+| `--hb-surface` | `#faf9f5` | `#181715` | 卡片画布 |
+| `--hb-surface-2` | `#efe9de` | `#252320` | 内部内容面 |
+| `--hb-ink` | `#141413` | `#faf9f5` | 标题、核心数字 |
+| `--hb-ink-2` | `#3d3d3a` | `#d8d2c8` | 正文、次要文字 |
+| `--hb-ink-muted` | `#6c6a64` | `#a09d96` | 说明、单位、时间 |
+| `--hb-hairline` | `#e6dfd8` | `#3a3732` | 发丝线、输入框 |
+| `--hb-divider` | `#ebe6df` | `#35322e` | 列表分隔线 |
+| `--hb-accent` | `#cc785c` | `#cc785c` | 主按钮、链接、图表主系列 |
+| `--hb-accent-active` | `#a9583e` | `#e08b70` | 按下/激活 |
+| `--hb-focus` | `#cc785c` | `#e08b70` | 键盘焦点 |
+| `--hb-positive` | `#5db872` | 随主题 | 状态：正常 |
+| `--hb-warning` | `#d4a017` | 随主题 | 状态：注意 |
+| `--hb-critical` | `#c64545` | 随主题 | 状态：异常 |
 
-状态色**只能用于表达状态**（例如温度过高、节点不可用），不能用作装饰。图表的主系列用强调色，其他系列用灰阶（`--hb-ink-2`、`--hb-ink-muted`）。
+珊瑚色要克制：用于主操作和少量高亮，不要把每个标签、边框和图标都染成珊瑚色。状态色只表达状态。
 
 ## 字体与字号
 
-- 字体栈由运行时提供（`-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", system-ui, sans-serif`），**不要自定义 `font-family`**。
-- 数字一律用 `tabular-nums`（下列字号类已包含）。
-- 字重只用 300、400、600，不用 500 和 700。
-- 17px 以上的字号使用负字距（字号类已处理）。
+- 标题和核心数字使用 `--hb-font-display`：Tiempos Headline 优先，回退到 Cormorant/EB Garamond、Georgia 和系统宋体。
+- 正文和 UI 使用 `--hb-font-body`：Inter 优先，回退到系统人文无衬线字体。
+- 不要在卡片中声明 `font-family`；使用下列公共类获得字体语义。
+- 数字一律使用 `tabular-nums`（数字与正文类已包含）。
+- 字重只用 300、400、500、600；展示衬线标题和大数字默认用 400，不要加粗。
 
 | 类 | 字号 / 字重 / 行高 | 用途 |
 |---|---|---|
-| `hb-metric-lg` | 40 / 600 / 1.1 | 大卡片的核心数字 |
-| `hb-metric` | 34 / 600 / 1.1，字距 -0.374px | 核心数字 |
-| `hb-metric-sm` | 21 / 600 / 1.19 | 次级数字 |
-| `hb-title` | 14 / 600 / 1.29，字距 -0.224px | 卡片标题 |
-| `hb-body` | 14 / 400 / 1.43 | 正文 |
-| `hb-body-lg` | 17 / 400 / 1.47，字距 -0.374px | 大号正文 |
-| `hb-fine` | 12 / 400 / 1.33 | 说明、单位、时间 |
-| `hb-micro` | 10 / 400 / 1.3 | 坐标轴、角标 |
+| `hb-metric-lg` | 40 / 400 / 1.05，展示衬线 | 大卡片核心数字 |
+| `hb-metric` | 34 / 400 / 1.1，展示衬线 | 核心数字 |
+| `hb-metric-sm` | 22 / 400 / 1.2，展示衬线 | 次级数字 |
+| `hb-title` | 16 / 400 / 1.3，展示衬线 | 卡片标题 |
+| `hb-body-lg` | 17 / 400 / 1.55 | 大号正文 |
+| `hb-body` | 14 / 400 / 1.55 | 正文 |
+| `hb-fine` | 12 / 400 / 1.4 | 说明、单位、时间 |
+| `hb-micro` | 10 / 500 / 1.4 | 坐标轴、角标 |
 
-## 间距与圆角
+## 间距、圆角与层次
 
-- 以 8px 为基准（4、8、12、16、24）。
-- 卡片内边距由 `hb-card` 自动设置：宽度不超过 6 格时 16px，8 格及以上时 24px。
-- 卡片圆角 18px 由宿主外框裁切，卡片自身不需要设置。内部浅色块（`hb-well`）11px，工具按钮 8px，主要按钮、胶囊标签和输入框用全圆角。
-
-## 层次
-
-卡片内部**不用阴影、不用渐变、不加装饰性边框**。层次只靠表面色（`--hb-surface` 与 `--hb-surface-2`）和发丝线（`--hb-hairline`）区分。
+- 以 4px 为基准，优先使用 4、8、12、16、24、32px。
+- `hb-card` 内边距：宽度不超过 6 格时 16px，8 格及以上 24px。
+- 按钮、输入框和工具控件用 8px 圆角；内容面用 12px；只有标签/状态胶囊使用全圆角。
+- 卡片外框圆角由 Desktop 宿主裁切，卡片 HTML 不重复设置。
+- 不使用装饰性阴影、渐变、冷蓝主色或纯白/冷灰画布。用两层暖色表面和发丝线建立层次。
 
 ## 组件类
 
 | 类 | 说明 |
 |---|---|
 | `hb-card` | 根元素，必须是 `<main class="hb-card">` |
-| `hb-header` | 标题行（标题在左，操作或更新时间在右） |
-| `hb-title` | 卡片标题 |
-| `hb-btn` | 主要按钮：强调色、全圆角 |
-| `hb-btn--secondary` | 次要按钮：描边、全圆角 |
-| `hb-btn--utility` | 工具按钮：8px 圆角，图标或短文字 |
-| `hb-input` | 输入框：全圆角 |
-| `hb-chip` | 胶囊标签 |
-| `hb-list` / `hb-row` | 列表和行（行间用分隔线） |
-| `hb-well` | 内部浅色块（11px 圆角，`--hb-surface-2`） |
-| `hb-state` | 加载、空、错误三态容器，配合 `HermesCard.ui.state` 使用 |
-| `hb-updated` | “更新于 14:32”，配合 `HermesCard.ui.updated` 使用 |
+| `hb-header` | 标题行，标题在左，操作或更新时间在右 |
+| `hb-title` | 衬线卡片标题 |
+| `hb-btn` | 珊瑚主按钮，8px 圆角 |
+| `hb-btn--secondary` | 画布色次按钮，发丝线边框 |
+| `hb-btn--utility` | 轻量工具按钮，8px 圆角 |
+| `hb-input` | 暖色输入框，珊瑚焦点环 |
+| `hb-chip` | 标签/状态胶囊 |
+| `hb-list` / `hb-row` | 列表和行，行间用暖色分隔线 |
+| `hb-well` | 浅奶油/深色升高内容面，12px 圆角 |
+| `hb-state` | 加载、空、错误三态容器 |
+| `hb-updated` | “更新于 14:32” |
 
-交互：按下时 `scale(.95)`，焦点环为 2px `--hb-focus`；动效时长 200ms，并遵守 `prefers-reduced-motion`（组件类已处理）。
+主按钮按下时变为 `--hb-accent-active`，不做缩放。键盘焦点使用珊瑚色边框和低透明外环。所有动效遵守 `prefers-reduced-motion`。
 
 ## 状态
 
-每张取数卡片都要处理三种状态：
+每张取数卡片都要处理：
 
-- **加载**：数据尚未返回时显示 `HermesCard.ui.state(el, 'loading')`。
-- **空**：脚本尚未运行过或没有数据时显示 `HermesCard.ui.state(el, 'empty', '暂无数据，点击刷新')`。
-- **错误**：读取失败或运行失败时显示 `HermesCard.ui.state(el, 'error', err.message)`，并给出重试入口。
-- 数据正常时调用 `HermesCard.ui.state(el, 'ready')` 隐藏状态层，并用 `HermesCard.ui.updated(el, updatedAt)` 显示更新时间。
+- **加载**：`HermesCard.ui.state(el, 'loading')`。
+- **空**：`HermesCard.ui.state(el, 'empty', '暂无数据，点击刷新')`。
+- **错误**：`HermesCard.ui.state(el, 'error', err.message)`，并提供重试入口。
+- **就绪**：`HermesCard.ui.state(el, 'ready')`，用 `HermesCard.ui.updated(el, updatedAt)` 显示时间。
 
 ## 尺寸适配
 
-运行时会在 `<html>` 上设置 `data-size="6x4"`、`data-w`、`data-h`、`data-theme`，尺寸变化时同步更新并触发 `resize` 事件。用属性选择器为不同尺寸调整布局，例如：
+运行时会在 `<html>` 上设置 `data-size`、`data-w`、`data-h`、`data-theme`，尺寸变化时触发 `resize`。用属性选择器按尺寸逐级精简：
 
 ```css
-html[data-size="4x4"] .forecast { display: none; }
+html[data-size="4x4"] .secondary { display: none; }
 html[data-w="8"] .grid { grid-template-columns: repeat(3, 1fr); }
 ```
 
-- 卡片在声明的**每一种尺寸**下都不能出现整体滚动条，内容要按尺寸取舍。
+- 每种声明尺寸都不能出现整体滚动条。
 - 列表只允许在高度不少于 6 格时内部滚动。
-- 一格的实际像素随窗口宽度变化（24 到 72px），用 `HermesCard.env.pixel` 或百分比布局，不要假设固定像素。
+- 不要假设一格的固定像素值。
 
 ## 图表与格式化
 
-- 图表用 `HermesCard.chart.line`、`sparkline`、`bar`、`ring`（SVG，自动使用令牌颜色并跟随主题），不要引入外部图表库。
-- 数字、百分比、字节、时长、相对时间用 `HermesCard.fmt` 格式化（中文格式），保证各卡片一致。
+- 图表使用 `HermesCard.chart.line`、`sparkline`、`bar`、`ring`，不引入外部图表库。
+- 主系列自动使用珊瑚色，其他系列使用暖色灰阶。
+- 数字、百分比、字节、时长、相对时间使用 `HermesCard.fmt`。
+
+## Do / Don't
+
+### Do
+
+- 从基础模板和公共 `hb-*` 类开始。
+- 让一个核心数字或一个主操作成为视觉重心。
+- 大数字和标题使用展示衬线公共类，保持 400 字重。
+- 使用奶油与暖黑表面的对比建立层次。
+
+### Don't
+
+- 不要使用纯白画布、冷灰卡片或蓝/青主强调。
+- 不要把衬线展示文字加粗。
+- 不要让珊瑚色同时占据所有按钮、标签和边框。
+- 不要使用装饰性阴影、渐变、外部字体或商标图形。

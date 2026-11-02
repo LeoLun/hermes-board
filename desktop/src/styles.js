@@ -55,18 +55,15 @@ export const BOARD_CSS = `
 .hb-card-badge span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hb-linkbtn { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; padding: 0 2px; }
 .hb-linkbtn:hover { text-decoration: underline; }
-.hb-arrange { position: absolute; right: 20px; bottom: 20px; z-index: 30; display: inline-flex; align-items: center; gap: 6px;
+.hb-floating-actions { position: absolute; right: 20px; bottom: 20px; z-index: 30; display: flex; align-items: center; gap: 4px;
+  padding: 3px; border: 1px solid var(--ui-stroke-tertiary, rgba(0,0,0,.08)); border-radius: 12px;
+  background: var(--ui-bg-elevated, #fff); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.hb-arrange { display: inline-flex; align-items: center; gap: 6px;
   height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--ui-stroke-tertiary, rgba(0,0,0,.08));
-  background: var(--ui-bg-elevated, #fff); color: var(--ui-text-primary); font: 600 12px/1 system-ui, sans-serif;
-  box-shadow: 0 6px 18px rgba(0,0,0,.12); cursor: pointer; }
+  background: transparent; color: var(--ui-text-primary); font: 600 12px/1 system-ui, sans-serif; cursor: pointer; }
 .hb-arrange:hover { background: var(--ui-control-hover-background, var(--ui-bg-secondary)); }
 .hb-arrange:disabled { opacity: .55; cursor: default; }
 .hb-arrange:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
-.hb-chip { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px; border-radius: 10px; font-size: 11px;
-  background: color-mix(in srgb, var(--ui-orange, #f5a623) 16%, transparent); color: var(--ui-orange, #b46900); }
-.hb-header { display: inline-flex; align-items: center; gap: 6px; }
-.hb-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; padding: 8px 16px;
-  border-bottom: 1px solid var(--ui-stroke-tertiary, rgba(0,0,0,.08)); font-size: 13px; }
 .hb-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 60%;
   padding: 48px 24px; text-align: center; color: var(--ui-text-secondary); font-size: 13px; }
 .hb-guide { max-width: 560px; margin: 0 auto; padding: 56px 24px; color: var(--ui-text-secondary); font-size: 13px; line-height: 1.6; }

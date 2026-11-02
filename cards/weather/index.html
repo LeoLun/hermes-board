@@ -11,7 +11,7 @@
   .region { color: var(--hb-ink-muted); white-space: nowrap; }
   .hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .now { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .temp { font-weight: 300; font-size: min(18vh, 64px); line-height: 1; letter-spacing: -1px; }
+  .temp { font-weight: 400; font-size: min(18vh, 64px); line-height: 1; letter-spacing: -1px; }
   .cond { color: var(--hb-ink-2); }
   .hilo { color: var(--hb-ink-muted); }
   .icon { color: var(--hb-ink-2); flex: none; width: min(18vh, 64px); height: min(18vh, 64px); }
@@ -67,7 +67,7 @@
   <section class="content" id="content" hidden>
     <div class="hero">
       <div class="now">
-        <div class="temp" id="temp">—</div>
+        <div class="hb-metric-lg temp" id="temp">—</div>
         <div class="hb-body cond" id="cond"></div>
         <div class="hb-fine hilo" id="hilo"></div>
       </div>

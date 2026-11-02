@@ -139,7 +139,7 @@ class ValidatorWarningsTest(unittest.TestCase):
         for code, style in cases.items():
             found, _ = self.warn_codes(html_with(style=style))
             self.assertIn(code, found, code)
-        found, _ = self.warn_codes(html_with(style=".x{box-shadow: none; font-weight: 300}"))
+        found, _ = self.warn_codes(html_with(style=".x{box-shadow: none; font-weight: 300}.y{font-weight:500}"))
         self.assertFalse({"design.shadow", "design.weight"} & set(found))
 
     def test_structure_rules(self):

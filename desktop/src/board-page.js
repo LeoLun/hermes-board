@@ -89,7 +89,13 @@ function BoardView({ st, theme, scope, services, onMenu }) {
 
   if (!items.length) {
     return h('div', { className: 'hb-scroll', ref: scrollRef },
-      h(Center, { title: '看板上还没有卡片' }, '点击右上角的“添加卡片”，或者在对话中让 Hermes 为你创建一张卡片。'));
+      h(Center, {
+        title: '看板上还没有卡片',
+        actions: h(AddCardButton, {
+          cards: st.cards || [],
+          onAdd: (card) => services.addCard(card.id),
+        }),
+      }, '添加一张已安装的卡片，或者在对话中让 Hermes 为你创建新卡片。'));
   }
 
   const target = gesture && gesture.target ? itemRect(gesture.target, cell) : null;
@@ -127,17 +133,6 @@ function BoardView({ st, theme, scope, services, onMenu }) {
 
 export function createBoardPage(services) {
   const { store } = services;
-  const HeaderControl = typeof sdk.WorkspacePageHeaderControl === 'function' || typeof sdk.WorkspacePageHeaderControl === 'object'
-    ? sdk.WorkspacePageHeaderControl : null;
-
-  function Header({ st }) {
-    const controls = h('div', { className: 'hb-header' },
-      st.phase === 'ready' && !st.connected ? h('span', { className: 'hb-chip', role: 'status' }, icon('debug-disconnect'), '已断开') : null,
-      h(AddCardButton, { cards: st.cards || [], disabled: st.phase !== 'ready', onAdd: (c) => services.addCard(c.id) }),
-      h(Button, { size: 'sm', variant: 'ghost', title: '重新加载看板', 'aria-label': '重新加载看板', onClick: () => services.reloadAll() }, icon('refresh')));
-    if (HeaderControl) return h(HeaderControl, { id: 'hermes-board.header' }, controls);
-    return h('div', { className: 'hb-toolbar' }, h('strong', null, '看板'), controls);
-  }
 
   function ArrangeButton({ disabled }) {
     const [busy, setBusy] = useState(false);
@@ -193,9 +188,10 @@ export function createBoardPage(services) {
 
     return h('div', { className: 'hb-page', ref: rootRef, 'data-theme': theme },
       h('style', null, BOARD_CSS),
-      h(Header, { st }),
       ready ? h(BoardView, { st, theme, scope, services, onMenu }) : h('div', { className: 'hb-scroll' }, h(PhaseView, { st, services })),
-      ready ? h(ArrangeButton, { disabled: !st.layout.items.length }) : null,
+      ready && st.layout.items.length ? h('div', { className: 'hb-floating-actions' },
+        h(AddCardButton, { cards: st.cards || [], onAdd: (card) => services.addCard(card.id) }),
+        h(ArrangeButton, { disabled: false })) : null,
       menu ? h(CardMenu, { menu, card: cardOf(menu.cardId), onClose: () => setMenu(null), onAction }) : null,
       dialog && dialog.type === 'runs' ? h(RunsDialog, { card: cardOf(dialog.cardId), services, onClose: () => setDialog(null) }) : null,
       dialog && dialog.type === 'about' ? h(AboutDialog, { card: cardOf(dialog.cardId), onClose: () => setDialog(null) }) : null);

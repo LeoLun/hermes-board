@@ -7,7 +7,7 @@
   .hb-card { justify-content: center; }
   .face { display: flex; flex-direction: column; justify-content: center; gap: 6px; flex: 1; min-height: 0; }
   .time { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
-  .hm { font-weight: 300; font-size: min(42vh, 22vw); line-height: 1; letter-spacing: -2px; color: var(--hb-ink); }
+  .hm { font-weight: 400; font-size: min(42vh, 22vw); line-height: 1; letter-spacing: -2px; color: var(--hb-ink); }
   .sec { font-weight: 400; font-size: min(12vh, 6vw); color: var(--hb-ink-muted); }
   .date { color: var(--hb-ink-2); }
   .meta { color: var(--hb-ink-muted); }
@@ -20,7 +20,7 @@
 <body>
 <main class="hb-card">
   <div class="face" role="timer" aria-live="off">
-    <div class="time"><span class="hm" id="hm">--:--</span><span class="sec" id="sec">--</span></div>
+    <div class="time"><span class="hb-metric-lg hm" id="hm">--:--</span><span class="sec" id="sec">--</span></div>
     <div class="hb-body-lg date" id="date"></div>
     <div class="hb-fine meta" id="meta"></div>
   </div>
