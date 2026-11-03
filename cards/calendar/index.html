@@ -20,6 +20,10 @@
   html[data-size="4x4"] .wd { padding-bottom: 0; font-size: 10px; }
   html[data-size="4x4"] .month { row-gap: 0; }
   html[data-size="6x6"] .summary { display: none; }
+  html[data-size="fullscreen"] .hb-card { width: min(100%, 1080px); }
+  html[data-size="fullscreen"] .month { row-gap: clamp(4px, 1vh, 12px); }
+  html[data-size="fullscreen"] .num { width: clamp(36px, 6vh, 68px); height: clamp(36px, 6vh, 68px); font-size: clamp(16px, 2.4vh, 26px); }
+  html[data-size="fullscreen"] .summary { font-size: 14px; }
 </style>
 </head>
 <body>

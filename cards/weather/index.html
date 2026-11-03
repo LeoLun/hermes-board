@@ -42,12 +42,35 @@
   html[data-size="8x4"] .day-text, html[data-size="8x4"] .pop { display: none; }
   html[data-size="8x4"] .day-icon { width: 28px; height: 28px; }
 
+  /* 12x4：当前天气、指标和三日预报横向展开 */
+  html[data-size="12x4"] .content { display: grid; grid-template-columns: 1.05fr .8fr 1.5fr; align-items: stretch; gap: 20px; }
+  html[data-size="12x4"] .hero { align-items: center; }
+  html[data-size="12x4"] .icon { width: min(18vh, 52px); height: min(18vh, 52px); }
+  html[data-size="12x4"] .facts { grid-template-columns: 1fr; align-content: center; padding: 10px 14px; }
+  html[data-size="12x4"] .fact { flex-direction: row; align-items: baseline; justify-content: space-between; }
+  html[data-size="12x4"] .days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  html[data-size="12x4"] .day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; border: 0; }
+  html[data-size="12x4"] .day-icon { width: 30px; height: 30px; }
+  html[data-size="12x4"] .day-text, html[data-size="12x4"] .pop, html[data-size="12x4"] .footer { display: none; }
+  html[data-size="12x4"] .editor { width: min(100%, 680px); margin: 0 auto; display: grid; grid-template-columns: auto 1fr auto; align-items: center; }
+  html[data-size="12x4"] .editor-row { align-items: center; }
+  html[data-size="12x4"] .editor-msg { grid-column: 2 / -1; }
+
   /* 4x4：只保留当前天气 */
   html[data-size="4x4"] .region, html[data-size="4x4"] .facts, html[data-size="4x4"] .days,
   html[data-size="4x4"] .footer, html[data-size="4x4"] #refresh { display: none; }
   html[data-size="4x4"] .temp { font-size: min(24vh, 56px); }
   html[data-size="4x4"] .icon { width: min(20vh, 44px); height: min(20vh, 44px); align-self: flex-start; }
   html[data-size="4x4"] .hero { align-items: flex-start; }
+
+  html[data-size="fullscreen"] .content { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(320px, 1.2fr); grid-template-rows: auto 1fr; gap: clamp(20px, 3vw, 40px); width: min(100%, 1180px); margin: auto; }
+  html[data-size="fullscreen"] .hero { grid-row: 1 / 3; flex-direction: column; justify-content: center; align-items: flex-start; }
+  html[data-size="fullscreen"] .temp { font-size: clamp(72px, 12vw, 150px); }
+  html[data-size="fullscreen"] .icon { width: clamp(80px, 10vw, 140px); height: clamp(80px, 10vw, 140px); }
+  html[data-size="fullscreen"] .facts { align-self: end; }
+  html[data-size="fullscreen"] .days { overflow-y: auto; }
+  html[data-size="fullscreen"] .day { padding: 12px 0; }
+  html[data-size="fullscreen"] .editor { width: min(100%, 720px); margin: auto; }
 
   /* 格子很小时（窄窗口）逐级精简 */
   @media (max-height: 330px) { html[data-size="8x8"] .facts { display: none; } }

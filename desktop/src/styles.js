@@ -34,12 +34,18 @@ export const BOARD_CSS = `
 .hb-corner path { fill: none; stroke: var(--ui-accent, #0071e3); stroke-width: 3; stroke-linecap: round; }
 .hb-corner:hover svg, .hb-card[data-handle=bl] .hb-corner[data-handle=bl] svg,
 .hb-card[data-handle=br] .hb-corner[data-handle=br] svg { opacity: 1; }
-.hb-expand { position: absolute; top: 10px; right: 10px; z-index: 5; width: 30px; height: 30px; margin: 0; padding: 0;
+.hb-card-actions { position: absolute; top: 10px; right: 10px; z-index: 5; display: flex; gap: 4px;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .12s ease, visibility 0s linear .12s; }
+.hb-card:hover > .hb-card-actions, .hb-card:focus-within > .hb-card-actions {
+  opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
+.hb-card-action { width: 30px; height: 30px; margin: 0; padding: 0;
   display: grid; place-items: center; border: 1px solid var(--ui-stroke-tertiary, rgba(0,0,0,.08)); border-radius: 9px;
   background: color-mix(in srgb, var(--ui-bg-elevated, #fff) 88%, transparent); color: var(--ui-text-primary);
-  box-shadow: 0 2px 8px rgba(0,0,0,.1); cursor: pointer; opacity: 1; transition: background .12s ease; }
-.hb-expand:hover { background: var(--ui-control-hover-background, var(--ui-bg-secondary)); }
-.hb-expand:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+  box-shadow: 0 2px 8px rgba(0,0,0,.1); cursor: pointer; transition: background .12s ease, color .12s ease; }
+.hb-card-action:hover { background: var(--ui-control-hover-background, var(--ui-bg-secondary)); }
+.hb-card-action-remove:hover { color: var(--ui-red, #d70015); }
+.hb-card-action:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
 .hb-fullscreen-dialog { width: calc(100vw - 64px); max-width: none; height: calc(100vh - 64px); max-height: none;
   display: flex; flex-direction: column; gap: 12px; padding: 20px; box-sizing: border-box; }
 .hb-fullscreen-header { flex: none; padding-right: 36px; }
@@ -109,6 +115,6 @@ export const BOARD_CSS = `
 .hb-about dd { margin: 0; color: var(--ui-text-primary); word-break: break-word; }
 .hb-muted { color: var(--ui-text-tertiary); }
 @media (prefers-reduced-motion: reduce) {
-  .hb-card, .hb-placeholder, .hb-grip, .hb-corner svg { transition: none !important; }
+  .hb-card, .hb-placeholder, .hb-grip, .hb-corner svg, .hb-card-actions, .hb-card-action { transition: none !important; }
 }
 `;

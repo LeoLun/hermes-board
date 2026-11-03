@@ -93,9 +93,25 @@ class BundledPackagesTest(unittest.TestCase):
 
     def test_weather_defaults_to_beijing_every_30m(self):
         manifest = init_mod.bundled_package("weather", CARDS_DIR)["manifest"]
+        self.assertIn("12x4", manifest["sizes"])
+        self.assertEqual(manifest["defaultSize"], "8x8")
         self.assertEqual(manifest["state"]["city"]["default"], "北京")
         fetch = manifest["scripts"]["fetch"]
         self.assertEqual((fetch["schedule"], fetch["runOnInstall"], fetch["callable"]), ("every 30m", True, True))
+
+    def test_default_cards_use_one_entry_with_fullscreen_rules(self):
+        for card_id in EXPECTED:
+            with self.subTest(card=card_id):
+                manifest = init_mod.bundled_package(card_id, CARDS_DIR)["manifest"]
+                self.assertEqual(manifest["entry"], "index.html")
+                self.assertNotIn("fullscreenEntry", manifest)
+                html = (CARDS_DIR / card_id / manifest["entry"]).read_text(encoding="utf-8")
+                self.assertIn('data-size="fullscreen"', html)
+
+    def test_weather_has_12x4_display_and_editor_layouts(self):
+        html = (CARDS_DIR / "weather" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('html[data-size="12x4"] .content', html)
+        self.assertIn('html[data-size="12x4"] .editor', html)
 
     def test_stateful_cards_declare_defaults(self):
         expect = {"world-clock": ("cities", ["纽约", "伦敦", "东京"]), "countdown": ("target", "元旦"),

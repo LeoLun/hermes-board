@@ -33,3 +33,9 @@ test('type and shape tokens encode the Claude editorial hierarchy', () => {
   assert.match(css, /\.hb-btn\s*\{[^}]*border-radius:\s*var\(--hb-radius-control\)/s);
   assert.match(css, /\.hb-well\s*\{[^}]*border-radius:\s*var\(--hb-radius-card\)/s);
 });
+
+test('grid headers reserve the host action safe area but fullscreen releases it', () => {
+  assert.match(css, /--hb-host-actions-safe:\s*84px/);
+  assert.match(css, /html:not\(\[data-size="fullscreen"\]\)\s+\.hb-header\s*\{[^}]*padding-right:\s*var\(--hb-host-actions-safe\)/s);
+  assert.match(css, /html\[data-size="fullscreen"\][^}]*--hb-pad:/s);
+});

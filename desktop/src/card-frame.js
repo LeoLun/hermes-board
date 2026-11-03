@@ -146,17 +146,6 @@ function CardFrameImpl(props) {
   st === 'ready' && snap.scriptError ? h('div', { className: 'hb-card-badge', role: 'status' },
     h('span', { title: snap.scriptError }, `卡片出错：${snap.scriptError}`),
     h('button', { type: 'button', className: 'hb-linkbtn', onClick: reload }, '重新加载')) : null,
-  editable && card && card.status === 'ok' && props.onFullscreen ? h('button', {
-    type: 'button',
-    className: 'hb-expand',
-    'aria-label': `全屏查看「${title}」`,
-    title: '全屏查看',
-    onPointerDown: (e) => e.stopPropagation(),
-    onClick: (e) => {
-      e.stopPropagation();
-      props.onFullscreen(item.card);
-    },
-  }, h(Codicon, { name: 'screen-full', 'aria-hidden': true })) : null,
   editable ? h('button', {
     type: 'button',
     className: 'hb-grip-zone',
@@ -166,6 +155,32 @@ function CardFrameImpl(props) {
     onBlur: () => props.onBlur(item),
     ...props.handlers,
   }, h('span', { className: 'hb-grip' })) : null,
+  editable && card && card.status === 'ok' && props.onFullscreen ? h('div', {
+    className: 'hb-card-actions',
+    role: 'group',
+    'aria-label': `「${title}」卡片操作`,
+    onPointerDown: (e) => e.stopPropagation(),
+  },
+  h('button', {
+    type: 'button',
+    className: 'hb-card-action',
+    'aria-label': `全屏查看「${title}」`,
+    title: '全屏查看',
+    onClick: (e) => {
+      e.stopPropagation();
+      props.onFullscreen(item.card);
+    },
+  }, h(Codicon, { name: 'screen-full', 'aria-hidden': true })),
+  h('button', {
+    type: 'button',
+    className: 'hb-card-action hb-card-action-remove',
+    'aria-label': `从看板删除「${title}」`,
+    title: '从看板删除',
+    onClick: (e) => {
+      e.stopPropagation();
+      props.onRemove(item.card);
+    },
+  }, h(Codicon, { name: 'trash', 'aria-hidden': true }))) : null,
   resizable ? h('div', {
     className: 'hb-corner', 'data-handle': 'bl', 'aria-hidden': 'true',
     onPointerDown: (e) => props.onStart(e, item, 'resize', 'bl'), ...props.handlers,

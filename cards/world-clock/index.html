@@ -20,6 +20,10 @@
   html[data-size="8x4"] .zone-name { order: 1; }
   html[data-size="4x4"] .zone { padding: 4px 0; }
   html[data-size="4x4"] .chips { gap: 4px; }
+  html[data-size="fullscreen"] .zones { width: min(100%, 1120px); margin: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 16px 28px; overflow-y: auto; }
+  html[data-size="fullscreen"] .zone { padding: 18px 0; }
+  html[data-size="fullscreen"] .zone-time { font-size: clamp(34px, 5vw, 72px); }
+  html[data-size="fullscreen"] .picker { width: min(100%, 960px); margin: auto; overflow-y: auto; }
 </style>
 </head>
 <body>
