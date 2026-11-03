@@ -5,7 +5,7 @@
   "description": "当前天气与未来三天预报，默认北京，可在卡片内更换城市",
   "version": "1.0.0",
   "entry": "index.html",
-  "sizes": ["4x4", "8x4", "8x8"],
+  "sizes": ["4x4", "8x4", "8x8", "12x4"],
   "defaultSize": "8x8",
   "scripts": {
     "fetch": {

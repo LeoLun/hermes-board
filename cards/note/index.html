@@ -10,6 +10,8 @@
   .foot { display: flex; justify-content: space-between; align-items: center; color: var(--hb-ink-muted); }
   .status.is-error { color: var(--hb-critical); }
   html[data-size="8x4"] .text { padding: 8px 12px; }
+  html[data-size="fullscreen"] .editor { width: min(100%, 1080px); margin: auto; }
+  html[data-size="fullscreen"] .text { padding: clamp(18px, 3vw, 36px); font-size: clamp(16px, 1.6vw, 22px); overflow-y: auto; }
 </style>
 </head>
 <body>

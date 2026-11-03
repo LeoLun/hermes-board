@@ -20,6 +20,10 @@
   .del { visibility: hidden; padding: 2px 8px; }
   .item:hover .del, .item:focus-within .del { visibility: visible; }
   .foot { display: flex; justify-content: space-between; align-items: center; color: var(--hb-ink-muted); flex: none; }
+  html[data-size="fullscreen"] .main { width: min(100%, 960px); margin: auto; }
+  html[data-size="fullscreen"] .items { overflow-y: auto; }
+  html[data-size="fullscreen"] .item { padding: 12px 0; }
+  html[data-size="fullscreen"] .add { position: sticky; top: 0; z-index: 1; background: var(--hb-surface); }
 </style>
 </head>
 <body>

@@ -26,6 +26,7 @@
   --hb-radius-utility: var(--hb-radius-control);
   --hb-radius-pill: 9999px;
   --hb-motion: 160ms;
+  --hb-host-actions-safe: 84px;
 }
 
 html[data-theme="dark"] {
@@ -46,6 +47,7 @@ html[data-theme="dark"] {
 }
 
 html[data-w="8"], html[data-w="12"] { --hb-pad: 24px; }
+html[data-size="fullscreen"] { --hb-pad: clamp(24px, 4vw, 56px); }
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -78,6 +80,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
   background: var(--hb-surface);
 }
 
+html[data-size="fullscreen"] .hb-card {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
 .hb-header {
   display: flex;
   align-items: center;
@@ -86,6 +93,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
   min-height: 24px;
   flex: none;
 }
+
+html:not([data-size="fullscreen"]) .hb-header { padding-right: var(--hb-host-actions-safe); }
 
 .hb-well {
   background: var(--hb-surface-2);

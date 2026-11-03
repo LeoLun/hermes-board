@@ -16,6 +16,10 @@
   html[data-size="6x4"] .view { flex-direction: row; align-items: center; justify-content: space-between; }
   html[data-size="6x4"] .text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   html[data-size="6x4"] .days { font-size: min(40vh, 20vw); }
+  html[data-size="fullscreen"] .view { width: min(100%, 1080px); margin: auto; align-items: center; text-align: center; }
+  html[data-size="fullscreen"] .days { font-size: clamp(110px, 24vw, 300px); }
+  html[data-size="fullscreen"] .label { font-size: clamp(22px, 3vw, 42px); }
+  html[data-size="fullscreen"] .form { width: min(100%, 680px); margin: auto; }
 </style>
 </head>
 <body>
