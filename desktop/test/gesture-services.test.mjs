@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { ApiError } from '../src/api.js';
 import { errorSummary, fmtDuration, fmtSize, fmtTime, cardProblem, cronText } from '../src/format.js';
 import { beginGesture, finishGesture, stepGesture } from '../src/gesture-math.js';
@@ -40,6 +41,24 @@ test('resize gesture snaps to the nearest allowed size; bl keeps the right edge'
   g = stepGesture(g, { clientX: -(span(7.6, CELL) - span(4, CELL)), clientY: span(4.3, CELL) - span(4, CELL), sizes });
   assert.deepEqual([g.target.x, g.target.w, g.target.h], [4, 8, 4], 'right edge stays at column 12');
   assert.deepEqual(finishGesture(g).op.rect, { x: 4, y: 0, w: 8, h: 4 });
+});
+
+test('weather resize reaches the declared 12x4 banner from its deployed 8x4 layout', () => {
+  const weather = item('weather', 0, 8, 8, 4);
+  let g = beginGesture({ items: [weather], id: 'weather', mode: 'resize', handle: 'br', cell: CELL, clientX: 0, clientY: 0, pointerId: 1 });
+  g = stepGesture(g, {
+    clientX: span(12, CELL) - span(8, CELL),
+    clientY: 0,
+    sizes: ['4x4', '8x4', '8x8', '12x4'],
+  });
+  assert.deepEqual([g.target.x, g.target.y, g.target.w, g.target.h, g.label], [0, 8, 12, 4, '12×4']);
+});
+
+test('pointer resize keeps tracking on window after the gesture shield appears', () => {
+  const source = fs.readFileSync(new URL('../src/gestures.js', import.meta.url), 'utf8');
+  assert.match(source, /window\.addEventListener\('pointermove'/);
+  assert.match(source, /window\.addEventListener\('pointerup'/);
+  assert.match(source, /window\.addEventListener\('pointercancel'/);
 });
 
 test('format helpers', () => {

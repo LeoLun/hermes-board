@@ -48,8 +48,10 @@ export const BOARD_CSS = `
 .hb-card-action:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
 .hb-fullscreen-dialog { width: calc(100vw - 64px); max-width: none; height: calc(100vh - 64px); max-height: none;
   display: flex; flex-direction: column; gap: 12px; padding: 20px; box-sizing: border-box; }
-.hb-fullscreen-header { flex: none; padding-right: 36px; }
-.hb-fullscreen-stage { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: ${RADIUS}px; }
+.hb-fullscreen-body { flex: 1; width: 100%; height: 100%; min-height: 0; padding: 0; overflow: hidden;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+.hb-fullscreen-header { min-width: 0; padding-right: 36px; }
+.hb-fullscreen-stage { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; border-radius: ${RADIUS}px; }
 .hb-fullscreen-stage .hb-card { border-radius: ${RADIUS}px; }
 .hb-shield { position: absolute; inset: 0; z-index: 20; }
 .hb-placeholder { position: absolute; box-sizing: border-box; border-radius: ${RADIUS}px; z-index: 1; pointer-events: none;

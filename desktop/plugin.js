@@ -1248,7 +1248,7 @@ function FullscreenCardDialog({ card, theme, scope, services, onClose }) {
     } },
     h(
       DialogContent2,
-      { className: "hb-fullscreen-dialog" },
+      { className: "hb-fullscreen-dialog", bodyClassName: "hb-fullscreen-body" },
       h(
         DialogHeader2,
         { className: "hb-fullscreen-header" },
@@ -1349,19 +1349,6 @@ function useGestures({ items, cards, cell, onCommit }) {
     const done = finishGesture(g);
     if (done) live.current.onCommit(done.op, done.items);
   }, [update]);
-  const pointerActive = !!gesture && gesture.mode !== "key";
-  useEffect3(() => {
-    if (!pointerActive) return void 0;
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        cancel();
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [pointerActive, cancel]);
   const start = useCallback2((e, item, mode, handle) => {
     if (e.button !== 0 || ref.current) return;
     e.preventDefault();
@@ -1373,27 +1360,47 @@ function useGestures({ items, cards, cell, onCommit }) {
     const { items: now, cell: cell2 } = live.current;
     update(beginGesture({ items: now, id: item.id, mode, handle, cell: cell2, clientX: e.clientX, clientY: e.clientY, pointerId: e.pointerId }));
   }, [update]);
+  const movePointer = useCallback2((e) => {
+    const g = ref.current;
+    if (!g || g.mode === "key" || e.pointerId !== g.pointerId) return;
+    const card = live.current.cards.get(g.id);
+    const next = stepGesture(g, { clientX: e.clientX, clientY: e.clientY, sizes: card ? card.sizes : [] });
+    if (next !== g) update(next);
+  }, [update]);
+  const finishPointer = useCallback2((e) => {
+    const g = ref.current;
+    if (!g || g.mode === "key" || e.pointerId !== g.pointerId) return;
+    commit(g);
+  }, [commit]);
+  const cancelPointer = useCallback2((e) => {
+    const g = ref.current;
+    if (g && g.mode !== "key" && e.pointerId === g.pointerId) cancel();
+  }, [cancel]);
+  const pointerActive = !!gesture && gesture.mode !== "key";
+  useEffect3(() => {
+    if (!pointerActive) return void 0;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        cancel();
+      }
+    };
+    window.addEventListener("pointermove", movePointer, true);
+    window.addEventListener("pointerup", finishPointer, true);
+    window.addEventListener("pointercancel", cancelPointer, true);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("pointermove", movePointer, true);
+      window.removeEventListener("pointerup", finishPointer, true);
+      window.removeEventListener("pointercancel", cancelPointer, true);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [pointerActive, cancel, movePointer, finishPointer, cancelPointer]);
   const handlers = {
-    onPointerMove(e) {
-      const g = ref.current;
-      if (!g || g.mode === "key" || e.pointerId !== g.pointerId) return;
-      const card = live.current.cards.get(g.id);
-      const next = stepGesture(g, { clientX: e.clientX, clientY: e.clientY, sizes: card ? card.sizes : [] });
-      if (next !== g) update(next);
-    },
-    onPointerUp(e) {
-      const g = ref.current;
-      if (!g || g.mode === "key" || e.pointerId !== g.pointerId) return;
-      commit(g);
-    },
-    onPointerCancel(e) {
-      const g = ref.current;
-      if (g && g.mode !== "key" && e.pointerId === g.pointerId) cancel();
-    },
-    onLostPointerCapture(e) {
-      const g = ref.current;
-      if (g && g.mode !== "key" && e.pointerId === g.pointerId) cancel();
-    }
+    onPointerMove: movePointer,
+    onPointerUp: finishPointer,
+    onPointerCancel: cancelPointer
   };
   const onKeyDown = useCallback2((e, item) => {
     const g = ref.current && ref.current.mode === "key" && ref.current.id === item.id ? ref.current : null;
@@ -1633,8 +1640,10 @@ var BOARD_CSS = `
 .hb-card-action:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
 .hb-fullscreen-dialog { width: calc(100vw - 64px); max-width: none; height: calc(100vh - 64px); max-height: none;
   display: flex; flex-direction: column; gap: 12px; padding: 20px; box-sizing: border-box; }
-.hb-fullscreen-header { flex: none; padding-right: 36px; }
-.hb-fullscreen-stage { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: ${RADIUS}px; }
+.hb-fullscreen-body { flex: 1; width: 100%; height: 100%; min-height: 0; padding: 0; overflow: hidden;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+.hb-fullscreen-header { min-width: 0; padding-right: 36px; }
+.hb-fullscreen-stage { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; border-radius: ${RADIUS}px; }
 .hb-fullscreen-stage .hb-card { border-radius: ${RADIUS}px; }
 .hb-shield { position: absolute; inset: 0; z-index: 20; }
 .hb-placeholder { position: absolute; box-sizing: border-box; border-radius: ${RADIUS}px; z-index: 1; pointer-events: none;

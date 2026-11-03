@@ -29,7 +29,7 @@ export function FullscreenCardDialog({ card, theme, scope, services, onClose }) 
   const title = card.title || card.id;
 
   return h(Dialog, { open: true, onOpenChange: (open) => { if (!open) onClose(); } },
-    h(DialogContent, { className: 'hb-fullscreen-dialog' },
+    h(DialogContent, { className: 'hb-fullscreen-dialog', bodyClassName: 'hb-fullscreen-body' },
       h(DialogHeader, { className: 'hb-fullscreen-header' },
         h(DialogTitle, null, title),
         h(DialogDescription, null, '全屏查看卡片；关闭后看板布局保持不变。')),

@@ -31,20 +31,6 @@ export function useGestures({ items, cards, cell, onCommit }) {
     if (done) live.current.onCommit(done.op, done.items);
   }, [update]);
 
-  const pointerActive = !!gesture && gesture.mode !== 'key';
-  useEffect(() => {
-    if (!pointerActive) return undefined;
-    const onKey = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        cancel();
-      }
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [pointerActive, cancel]);
-
   const start = useCallback((e, item, mode, handle) => {
     if (e.button !== 0 || ref.current) return;
     e.preventDefault();
@@ -58,27 +44,52 @@ export function useGestures({ items, cards, cell, onCommit }) {
     update(beginGesture({ items: now, id: item.id, mode, handle, cell, clientX: e.clientX, clientY: e.clientY, pointerId: e.pointerId }));
   }, [update]);
 
+  const movePointer = useCallback((e) => {
+    const g = ref.current;
+    if (!g || g.mode === 'key' || e.pointerId !== g.pointerId) return;
+    const card = live.current.cards.get(g.id);
+    const next = stepGesture(g, { clientX: e.clientX, clientY: e.clientY, sizes: card ? card.sizes : [] });
+    if (next !== g) update(next);
+  }, [update]);
+
+  const finishPointer = useCallback((e) => {
+    const g = ref.current;
+    if (!g || g.mode === 'key' || e.pointerId !== g.pointerId) return;
+    commit(g);
+  }, [commit]);
+
+  const cancelPointer = useCallback((e) => {
+    const g = ref.current;
+    if (g && g.mode !== 'key' && e.pointerId === g.pointerId) cancel();
+  }, [cancel]);
+
+  const pointerActive = !!gesture && gesture.mode !== 'key';
+  useEffect(() => {
+    if (!pointerActive) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        cancel();
+      }
+    };
+    // Keep tracking even if pointer capture is unavailable or the gesture shield becomes the hit target.
+    window.addEventListener('pointermove', movePointer, true);
+    window.addEventListener('pointerup', finishPointer, true);
+    window.addEventListener('pointercancel', cancelPointer, true);
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('pointermove', movePointer, true);
+      window.removeEventListener('pointerup', finishPointer, true);
+      window.removeEventListener('pointercancel', cancelPointer, true);
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, [pointerActive, cancel, movePointer, finishPointer, cancelPointer]);
+
   const handlers = {
-    onPointerMove(e) {
-      const g = ref.current;
-      if (!g || g.mode === 'key' || e.pointerId !== g.pointerId) return;
-      const card = live.current.cards.get(g.id);
-      const next = stepGesture(g, { clientX: e.clientX, clientY: e.clientY, sizes: card ? card.sizes : [] });
-      if (next !== g) update(next);
-    },
-    onPointerUp(e) {
-      const g = ref.current;
-      if (!g || g.mode === 'key' || e.pointerId !== g.pointerId) return;
-      commit(g);
-    },
-    onPointerCancel(e) {
-      const g = ref.current;
-      if (g && g.mode !== 'key' && e.pointerId === g.pointerId) cancel();
-    },
-    onLostPointerCapture(e) {
-      const g = ref.current;
-      if (g && g.mode !== 'key' && e.pointerId === g.pointerId) cancel();
-    },
+    onPointerMove: movePointer,
+    onPointerUp: finishPointer,
+    onPointerCancel: cancelPointer,
   };
 
   const onKeyDown = useCallback((e, item) => {
