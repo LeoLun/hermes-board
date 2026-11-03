@@ -54,11 +54,37 @@ class InitTest(BoardTestCase):
         board = get_board()
         self.wait_runs(board)
         self.cron.jobs.clear()
+        alpha = board.cards.read_package("alpha")
+        bundled_alpha = self.bundled / "alpha" / "index.html"
+        bundled_alpha.write_text(alpha["html"] + "\n<!-- bundled update -->\n", encoding="utf-8")
+        meta_path = board.paths.card_dir("alpha") / ".meta.json"
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        meta.pop("packageSha256")
+        meta_path.write_text(json.dumps(meta), encoding="utf-8")
         board.db.set_meta("pluginVersion", "0.0.1")
         board_mod.shutdown_all()
         board_mod.reset_cache()
-        get_board()
+        again = get_board()
         self.assertEqual([j["name"] for j in self.cron.jobs.values()], ["hermes-board:alpha:fetch"])
+        self.assertIn("bundled update", again.cards.document("alpha")["html"])
+        self.assertEqual(again.cards.info("alpha")["revision"], 2)
+
+    def test_version_change_preserves_replaced_user_card(self):
+        board = get_board()
+        self.wait_runs(board)
+        current = board.cards.read_package("alpha")
+        board.cards.install({
+            "manifest": dict(current["manifest"], title="我的 alpha"),
+            "html": current["html"],
+            "scripts": current["scripts"],
+        }, replace=True, source="agent")
+        (self.bundled / "alpha" / "index.html").write_text(current["html"] + "\nnew bundled\n", encoding="utf-8")
+        board.db.set_meta("pluginVersion", "0.0.1")
+        board_mod.shutdown_all()
+        board_mod.reset_cache()
+        again = get_board()
+        self.assertEqual(again.cards.info("alpha")["title"], "我的 alpha")
+        self.assertNotIn("new bundled", again.cards.document("alpha")["html"])
 
     def test_concurrent_processes_initialize_once(self):
         home = self.tmp / "concurrent-home"

@@ -1,5 +1,5 @@
 name: hermes-board
-version: 0.1.0
+version: 0.1.1
 manifest_version: 2
 description: 可自定义的卡片看板：远程卡片包、SQLite 数据、原生 cron 刷新，以及 Hermes Desktop 看板页面。
 author: liujinglun

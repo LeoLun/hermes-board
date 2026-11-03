@@ -54,7 +54,7 @@ class ApiTest(BoardTestCase):
         resp = self.get("/health")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.headers["cache-control"], "no-store")
-        self.assertEqual(resp.json(), {"ok": True, "pluginVersion": "0.1.0", "apiVersion": 1, "schemaVersion": 1,
+        self.assertEqual(resp.json(), {"ok": True, "pluginVersion": "0.1.1", "apiVersion": 1, "schemaVersion": 1,
                                        "cronAvailable": True, "aiAvailable": False})
 
     def test_board_view(self):

@@ -27,6 +27,16 @@ def _sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _package_sha(manifest: dict[str, Any], html: str, scripts: dict[str, str]) -> str:
+    payload = json.dumps(
+        {"manifest": manifest, "html": html, "scripts": scripts},
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return _sha(payload)
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -131,6 +141,32 @@ class CardStore:
         return {"manifest": manifest, "html": html_path.read_text(encoding="utf-8") if html_path.is_file() else "",
                 "scripts": scripts, "revision": int(self._meta(card_id).get("revision", 1))}
 
+    def is_unmodified_bundled(self, card_id: str) -> bool:
+        """Whether a bundled card can be replaced without overwriting user edits.
+
+        New installs record a digest for the whole package.  The legacy fallback
+        accepts only the original bundled revision whose HTML still matches its
+        install-time digest; this upgrades pre-digest default cards once.
+        """
+        if not self.exists(card_id):
+            return False
+        meta = self._meta(card_id)
+        if meta.get("source") != "bundled":
+            return False
+        current = self.read_package(card_id)
+        package_sha = _package_sha(current["manifest"], current["html"], current["scripts"])
+        recorded = meta.get("packageSha256")
+        if recorded:
+            return recorded == package_sha
+        return int(meta.get("revision", 1)) == 1 and meta.get("sha256") == _sha(current["html"])
+
+    def matches_package(self, card_id: str, package: dict[str, Any]) -> bool:
+        if not self.exists(card_id):
+            return False
+        current = self.read_package(card_id)
+        return all(current[key] == (package.get(key) or ({} if key == "scripts" else ""))
+                   for key in ("manifest", "html", "scripts"))
+
     # ── SDK sync ──────────────────────────────────────────────────────────
     def sync_sdk(self) -> bool:
         """Copy the bundled SDK when the installed copy differs (content hash)."""
@@ -179,8 +215,13 @@ class CardStore:
                 stage_card.mkdir(parents=True)
                 atomic_write_json(stage_card / "card.json", manifest)
                 atomic_write_bytes(stage_card / "index.html", html.encode("utf-8"))
-                atomic_write_json(stage_card / META_FILE, {"revision": revision, "installedAt": _now_iso(),
-                                                           "source": source, "sha256": _sha(html)})
+                atomic_write_json(stage_card / META_FILE, {
+                    "revision": revision,
+                    "installedAt": _now_iso(),
+                    "source": source,
+                    "sha256": _sha(html),
+                    "packageSha256": _package_sha(manifest, html, scripts),
+                })
                 stage_scripts.mkdir(parents=True)
                 for name, content in scripts.items():
                     target = self.paths.script_file(card_id, name)  # validates naming again

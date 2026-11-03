@@ -19,7 +19,7 @@ import { Button, Codicon, SandboxedFrame } from "@hermes/plugin-sdk";
 // shared/constants.json
 var constants_default = {
   pluginId: "hermes-board",
-  pluginVersion: "0.1.0",
+  pluginVersion: "0.1.1",
   apiVersion: 1,
   protocol: 1,
   layoutSchema: "hermes-board/layout@1",
